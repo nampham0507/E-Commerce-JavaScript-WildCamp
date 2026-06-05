@@ -1,113 +1,74 @@
 <%- include('../partials/header') %>
 
 <style>
-   .admin-container {
-      display: flex;
-      gap: 2rem;
-      max-width: 1120px;
-      margin: 0 auto;
-      padding: 8rem 1.5rem 2rem;
-   }
-   .admin-sidebar {
-      width: 280px;
-      flex-shrink: 0;
-      background: #fff;
-      border-radius: 1rem;
-      padding: 1.5rem;
-      box-shadow: 0 10px 20px rgba(0,0,0,0.05);
-      height: fit-content;
-   }
-   .admin-nav-list {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-   }
-   .admin-nav-link {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      padding: 0.75rem 1rem;
-      border-radius: 0.5rem;
-      color: var(--text-color);
-      font-weight: 500;
-      transition: all 0.3s ease;
-   }
-   .admin-nav-link:hover {
-      background: rgba(140, 200, 150, 0.1);
-      color: var(--first-color);
-   }
-   .admin-nav-link.active {
-      background: var(--gradient-color);
-      color: #fff;
-   }
-   .admin-content {
-      flex-grow: 1;
-   }
-
-   /* Responsive layout */
-   @media screen and (max-width: 768px) {
-      .admin-container {
-         flex-direction: column;
-         padding-top: 6.5rem;
-      }
-      .admin-sidebar {
-         width: 100%;
-      }
-      .admin-nav-list {
-         flex-direction: row;
-         flex-wrap: wrap;
-      }
-      .admin-nav-link {
-         flex: 1 1 140px;
-         justify-content: center;
-         font-size: 0.85rem;
-         padding: 0.5rem;
-      }
-   }
+  .admin-container { display:flex; gap:2rem; max-width:1120px; margin:0 auto; padding:8rem 1.5rem 2rem; }
+  .admin-sidebar { width:280px; flex-shrink:0; background:#fff; border-radius:1rem; padding:1.5rem; box-shadow:0 10px 20px rgba(0,0,0,0.05); height:fit-content; }
+  .admin-nav-list { display:flex; flex-direction:column; gap:0.5rem; }
+  .admin-nav-link { display:flex; align-items:center; gap:0.75rem; padding:0.75rem 1rem; border-radius:0.5rem; color:var(--text-color); font-weight:500; transition:all 0.3s; }
+  .admin-nav-link:hover { background:rgba(140,200,150,0.1); color:var(--first-color); }
+  .admin-nav-link.active { background:var(--gradient-color); color:#fff; }
+  .admin-content { flex-grow:1; }
+  @media screen and (max-width:768px) {
+    .admin-container { flex-direction:column; padding-top:6.5rem; }
+    .admin-sidebar { width:100%; }
+    .admin-nav-list { flex-direction:row; flex-wrap:wrap; }
+    .admin-nav-link { flex:1 1 140px; justify-content:center; font-size:0.85rem; padding:0.5rem; }
+  }
 </style>
 
 <div class="admin-container">
-   <!-- Sidebar Partial -->
-   <%- include('partials/sidebar', { activePage: 'orders' }) %>
+  <%- include('partials/sidebar', { activePage: 'orders' }) %>
 
-   <!-- Main content -->
-   <main class="admin-content">
-      <h2 class="home__title" style="font-family: var(--second-font); margin-bottom: 2rem;">Quản Lý Đơn Hàng</h2>
+  <main class="admin-content">
+    <h2 class="home__title" style="font-family:var(--second-font);margin-bottom:2rem;">Quản Lý Đơn Hàng</h2>
 
-      <div style="background: #fff; border-radius: 1rem; padding: 2rem; box-shadow: 0 10px 20px rgba(0,0,0,0.05); overflow-x: auto;">
-         <table style="width: 100%; border-collapse: collapse; text-align: left; min-width: 600px;">
-            <thead>
-               <tr style="border-bottom: 2px solid #eee;">
-                  <th style="padding: 1rem 0.5rem; color: var(--title-color);">Mã đơn hàng</th>
-                  <th style="padding: 1rem 0.5rem; color: var(--title-color);">Khách hàng</th>
-                  <th style="padding: 1rem 0.5rem; color: var(--title-color);">Ngày đặt</th>
-                  <th style="padding: 1rem 0.5rem; color: var(--title-color);">Tổng tiền</th>
-                  <th style="padding: 1rem 0.5rem; color: var(--title-color);">Trạng thái</th>
-                  <th style="padding: 1rem 0.5rem; color: var(--title-color);">Thao tác</th>
-               </tr>
-            </thead>
-            <tbody>
-               <% orders.forEach(order => { %>
-                  <tr style="border-bottom: 1px solid #eee;">
-                     <td style="padding: 1rem 0.5rem; font-weight: 700; color: var(--title-color);"><%= order.id %></td>
-                     <td style="padding: 1rem 0.5rem; font-weight: 500;"><%= order.customer %></td>
-                     <td style="padding: 1rem 0.5rem; opacity: 0.8;"><%= order.date %></td>
-                     <td style="padding: 1rem 0.5rem; color: var(--first-color); font-weight: 700;"><%= order.total %></td>
-                     <td style="padding: 1rem 0.5rem;">
-                        <span style="display: inline-block; padding: 0.25rem 0.75rem; border-radius: 1rem; font-size: 0.8rem; font-weight: 600;
-                           <%= order.status === 'Đã hoàn thành' ? 'background: #d4efdf; color: #196f3d;' : (order.status === 'Đã hủy' ? 'background: #fadbd8; color: #78281f;' : 'background: #fcf3cf; color: #7e5109;') %>">
-                           <%= order.status %>
-                        </span>
-                     </td>
-                     <td style="padding: 1rem 0.5rem;">
-                        <button style="background: none; border: none; color: #2980b9; cursor: pointer; font-weight: 600;">Xem chi tiết</button>
-                     </td>
-                  </tr>
-               <% }) %>
-            </tbody>
-         </table>
-      </div>
-   </main>
+    <div style="background:#fff;border-radius:1rem;padding:2rem;box-shadow:0 10px 20px rgba(0,0,0,0.05);overflow-x:auto;">
+      <table style="width:100%;border-collapse:collapse;text-align:left;min-width:640px;">
+        <thead>
+          <tr style="border-bottom:2px solid #eee;">
+            <th style="padding:1rem 0.5rem;color:var(--title-color);">Mã đơn</th>
+            <th style="padding:1rem 0.5rem;color:var(--title-color);">Khách hàng</th>
+            <th style="padding:1rem 0.5rem;color:var(--title-color);">Ngày đặt</th>
+            <th style="padding:1rem 0.5rem;color:var(--title-color);">Tổng tiền</th>
+            <th style="padding:1rem 0.5rem;color:var(--title-color);">Trạng thái</th>
+            <th style="padding:1rem 0.5rem;color:var(--title-color);">Cập nhật</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (orders.length === 0) { %>
+            <tr><td colspan="6" style="padding:2rem;text-align:center;opacity:0.5;">Chưa có đơn hàng nào</td></tr>
+          <% } %>
+          <% orders.forEach(order => { %>
+            <tr style="border-bottom:1px solid #eee;">
+              <td style="padding:1rem 0.5rem;font-weight:700;color:var(--title-color);font-size:0.85rem;"><%= order.orderCode %></td>
+              <td style="padding:1rem 0.5rem;">
+                <div style="font-weight:500;"><%= order.customer.name %></div>
+                <div style="font-size:0.8rem;opacity:0.6;"><%= order.customer.phone %></div>
+              </td>
+              <td style="padding:1rem 0.5rem;opacity:0.8;font-size:0.88rem;"><%= new Date(order.createdAt).toLocaleDateString('vi-VN') %></td>
+              <td style="padding:1rem 0.5rem;color:var(--first-color);font-weight:700;"><%= order.total.toLocaleString('vi-VN') %>đ</td>
+              <td style="padding:1rem 0.5rem;">
+                <span style="display:inline-block;padding:0.25rem 0.75rem;border-radius:1rem;font-size:0.8rem;font-weight:600;
+                  <%= order.status === 'Đã hoàn thành' ? 'background:#d4efdf;color:#196f3d;' : (order.status === 'Đã hủy' ? 'background:#fadbd8;color:#78281f;' : 'background:#fcf3cf;color:#7e5109;') %>">
+                  <%= order.status %>
+                </span>
+              </td>
+              <td style="padding:1rem 0.5rem;">
+                <form action="/admin/orders/status/<%= order._id %>" method="POST" style="display:flex;gap:0.4rem;align-items:center;">
+                  <select name="status" style="padding:0.3rem 0.5rem;border:1px solid #ddd;border-radius:0.4rem;font-size:0.82rem;">
+                    <option value="Đang xử lý"  <%= order.status === 'Đang xử lý'  ? 'selected' : '' %>>Đang xử lý</option>
+                    <option value="Đã hoàn thành" <%= order.status === 'Đã hoàn thành' ? 'selected' : '' %>>Đã hoàn thành</option>
+                    <option value="Đã hủy"       <%= order.status === 'Đã hủy'       ? 'selected' : '' %>>Đã hủy</option>
+                  </select>
+                  <button type="submit" style="padding:0.3rem 0.6rem;background:var(--gradient-color);color:#fff;border:none;border-radius:0.4rem;cursor:pointer;font-size:0.8rem;">Lưu</button>
+                </form>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </main>
 </div>
 
 <%- include('../partials/footer') %>

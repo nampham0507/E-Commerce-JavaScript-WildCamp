@@ -1,5 +1,6 @@
 const User = require('../models/User');
-const bcrypt = require('bcryptjs');
+
+const SEVEN_DAYS = 7 * 24 * 60 * 60 * 1000;
 
 exports.getLogin = (req, res) => {
     res.render('auth/login', { error: null });
@@ -12,30 +13,20 @@ exports.getRegister = (req, res) => {
 exports.register = async (req, res) => {
     try {
         const { name, email, password } = req.body;
-        
-        // Check if user exists
+
         const userExists = await User.findOne({ email });
         if (userExists) {
             return res.render('auth/register', { error: 'Email đã được sử dụng.' });
         }
 
-        // Hash password
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
-
-        // Check if this is the first user to make them admin (optional, or we can check email/name)
-        // Or simply make them customer by default
+        // First registered user becomes admin, the rest are customers
         const userCount = await User.countDocuments();
         const role = userCount === 0 ? 'admin' : 'customer';
 
-        const user = new User({
-            name,
-            email,
-            password: hashedPassword,
-            role
-        });
-
+        // Password is hashed automatically by the pre-save hook in the User model
+        const user = new User({ name, email, password, role });
         await user.save();
+
         res.redirect('/auth/login');
     } catch (error) {
         res.render('auth/register', { error: 'Có lỗi xảy ra, vui lòng thử lại.' });
@@ -44,19 +35,25 @@ exports.register = async (req, res) => {
 
 exports.login = async (req, res) => {
     try {
-        const { email, password } = req.body;
+        const { email, password, remember } = req.body;
 
         const user = await User.findOne({ email });
         if (!user) {
             return res.render('auth/login', { error: 'Email hoặc mật khẩu không chính xác.' });
         }
 
-        const isMatch = await bcrypt.compare(password, user.password);
+        const isMatch = await user.comparePassword(password);
         if (!isMatch) {
             return res.render('auth/login', { error: 'Email hoặc mật khẩu không chính xác.' });
         }
 
-        // Set session
+        // "Remember me": keep the session for 7 days; otherwise it expires when the browser closes
+        if (remember) {
+            req.session.cookie.maxAge = SEVEN_DAYS;
+        } else {
+            req.session.cookie.expires = false; // session cookie
+        }
+
         req.session.user = {
             id: user._id,
             name: user.name,
@@ -64,11 +61,9 @@ exports.login = async (req, res) => {
             role: user.role
         };
 
-        if (user.role === 'admin') {
-            res.redirect('/admin');
-        } else {
-            res.redirect('/');
-        }
+        const returnTo = req.session.returnTo || (user.role === 'admin' ? '/admin' : '/');
+        delete req.session.returnTo;
+        res.redirect(returnTo);
     } catch (error) {
         res.render('auth/login', { error: 'Có lỗi xảy ra, vui lòng thử lại.' });
     }

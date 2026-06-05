@@ -1,49 +1,77 @@
 <%- include('../partials/header') %>
 
 <main class="main" style="padding-top: 8rem; min-height: 80vh; max-width: 1120px; margin: 0 auto; padding-inline: 1.5rem;">
-   <h2 class="home__title" style="margin-bottom: 2rem; font-family: var(--second-font);">Giỏ Hàng Của Bạn</h2>
+  <h2 class="home__title" style="margin-bottom: 2rem; font-family: var(--second-font);">Giỏ Hàng Của Bạn</h2>
 
-   <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 3rem;">
-      <div style="background: #fff; border-radius: 1rem; padding: 2rem; box-shadow: 0 10px 20px rgba(0,0,0,0.05);">
-         <% if (cartItems && cartItems.length > 0) { %>
-            <% cartItems.forEach(item => { %>
-               <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #eee; padding-bottom: 1.5rem; margin-bottom: 1.5rem;">
-                  <div style="display: flex; align-items: center; gap: 1rem;">
-                     <img src="<%= item.image %>" alt="<%= item.name %>" style="width: 80px; height: 80px; object-fit: contain;">
-                     <div>
-                        <h4 style="color: var(--title-color); margin-bottom: 0.25rem;"><%= item.name %></h4>
-                        <span style="color: var(--first-color); font-weight: 700;"><%= item.price %></span>
-                     </div>
-                  </div>
-                  <div style="display: flex; align-items: center; gap: 0.5rem;">
-                     <button style="border: 1px solid #ccc; padding: 0.25rem 0.5rem; background: #fff; cursor: pointer;">-</button>
-                     <span>1</span>
-                     <button style="border: 1px solid #ccc; padding: 0.25rem 0.5rem; background: #fff; cursor: pointer;">+</button>
-                  </div>
-               </div>
-            <% }) %>
-         <% } else { %>
-            <p>Không có sản phẩm nào trong giỏ hàng.</p>
-         <% } %>
-      </div>
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 3rem;">
 
-      <div style="background: #fff; border-radius: 1rem; padding: 2rem; box-shadow: 0 10px 20px rgba(0,0,0,0.05); height: fit-content;">
-         <h3 style="color: var(--title-color); margin-bottom: 1.5rem;">Tóm tắt đơn hàng</h3>
-         <div style="display: flex; justify-content: space-between; margin-bottom: 1rem; opacity: 0.8;">
-            <span>Tạm tính</span>
-            <span>2,300,000đ</span>
-         </div>
-         <div style="display: flex; justify-content: space-between; margin-bottom: 1.5rem; opacity: 0.8;">
-            <span>Phí vận chuyển</span>
-            <span>Miễn phí</span>
-         </div>
-         <div style="display: flex; justify-content: space-between; font-weight: 700; font-size: 1.25rem; border-top: 1px solid #eee; padding-top: 1.5rem; margin-bottom: 2rem;">
-            <span>Tổng cộng</span>
-            <span style="color: var(--first-color);">2,300,000đ</span>
-         </div>
-         <a href="/checkout" class="btn-buy" style="border-radius: 0.5rem;">Tiến Hành Thanh Toán</a>
+    <!-- Cart items -->
+    <div style="background: #fff; border-radius: 1rem; padding: 2rem; box-shadow: 0 10px 20px rgba(0,0,0,0.05);">
+      <% if (cartItems && cartItems.length > 0) { %>
+        <% cartItems.forEach(item => { %>
+          <div style="display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid #eee; padding-bottom:1.5rem; margin-bottom:1.5rem;">
+            <div style="display:flex; align-items:center; gap:1rem;">
+              <% if (item.image) { %>
+                <img src="<%= item.image %>" alt="<%= item.name %>" style="width:80px;height:80px;object-fit:contain;border-radius:0.5rem;">
+              <% } %>
+              <div>
+                <h4 style="color:var(--title-color);margin-bottom:0.25rem;"><%= item.name %></h4>
+                <span style="color:var(--first-color);font-weight:700;"><%= item.price.toLocaleString('vi-VN') %>đ</span>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:0.5rem;flex-direction:column;align-items:flex-end;">
+              <div style="display:flex;align-items:center;gap:0.25rem;">
+                <form action="/cart/update" method="POST" style="display:inline">
+                  <input type="hidden" name="productId" value="<%= item._id %>">
+                  <input type="hidden" name="quantity" value="<%= item.quantity - 1 %>">
+                  <button type="submit" style="border:1px solid #ccc;padding:0.25rem 0.6rem;background:#fff;cursor:pointer;border-radius:0.25rem;">-</button>
+                </form>
+                <span style="min-width:24px;text-align:center;font-weight:600;"><%= item.quantity %></span>
+                <form action="/cart/update" method="POST" style="display:inline">
+                  <input type="hidden" name="productId" value="<%= item._id %>">
+                  <input type="hidden" name="quantity" value="<%= item.quantity + 1 %>">
+                  <button type="submit" style="border:1px solid #ccc;padding:0.25rem 0.6rem;background:#fff;cursor:pointer;border-radius:0.25rem;">+</button>
+                </form>
+              </div>
+              <div style="font-size:0.85rem;color:var(--first-color);font-weight:600;"><%= item.subtotal.toLocaleString('vi-VN') %>đ</div>
+              <form action="/cart/remove" method="POST" style="display:inline">
+                <input type="hidden" name="productId" value="<%= item._id %>">
+                <button type="submit" style="background:none;border:none;color:#c0392b;cursor:pointer;font-size:0.8rem;">Xóa</button>
+              </form>
+            </div>
+          </div>
+        <% }) %>
+      <% } else { %>
+        <div style="text-align:center;padding:3rem 0;opacity:0.5;">
+          <i class="ri-shopping-cart-line" style="font-size:3rem;display:block;margin-bottom:1rem;"></i>
+          <p>Giỏ hàng trống. <a href="/" style="color:var(--first-color);">Tiếp tục mua sắm</a></p>
+        </div>
+      <% } %>
+    </div>
+
+    <!-- Order summary -->
+    <div style="background:#fff;border-radius:1rem;padding:2rem;box-shadow:0 10px 20px rgba(0,0,0,0.05);height:fit-content;">
+      <h3 style="color:var(--title-color);margin-bottom:1.5rem;">Tóm tắt đơn hàng</h3>
+      <div style="display:flex;justify-content:space-between;margin-bottom:1rem;opacity:0.8;">
+        <span>Tạm tính (<%= cartItems ? cartItems.length : 0 %> sản phẩm)</span>
+        <span><%= (total || 0).toLocaleString('vi-VN') %>đ</span>
       </div>
-   </div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:1.5rem;opacity:0.8;">
+        <span>Phí vận chuyển</span>
+        <span>Miễn phí</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-weight:700;font-size:1.25rem;border-top:1px solid #eee;padding-top:1.5rem;margin-bottom:2rem;">
+        <span>Tổng cộng</span>
+        <span style="color:var(--first-color);"><%= (total || 0).toLocaleString('vi-VN') %>đ</span>
+      </div>
+      <% if (cartItems && cartItems.length > 0) { %>
+        <a href="/checkout" class="btn-buy" style="border-radius:0.5rem;display:block;text-align:center;">Tiến Hành Thanh Toán</a>
+      <% } else { %>
+        <button disabled style="display:block;width:100%;padding:0.75rem;background:#ccc;color:#fff;border:none;border-radius:0.5rem;font-size:1rem;cursor:not-allowed;">Tiến Hành Thanh Toán</button>
+      <% } %>
+    </div>
+
+  </div>
 </main>
 
 <%- include('../partials/footer') %>

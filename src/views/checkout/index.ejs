@@ -1,44 +1,85 @@
 <%- include('../partials/header') %>
 
 <main class="main" style="padding-top: 8rem; min-height: 80vh; max-width: 1120px; margin: 0 auto; padding-inline: 1.5rem;">
-   <h2 class="home__title" style="margin-bottom: 2rem; font-family: var(--second-font);">Thanh Toán</h2>
+  <h2 class="home__title" style="margin-bottom: 2rem; font-family: var(--second-font);">Thanh Toán</h2>
 
-   <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 3rem;">
-      <div style="background: #fff; border-radius: 1rem; padding: 2rem; box-shadow: 0 10px 20px rgba(0,0,0,0.05);">
-         <h3 style="color: var(--title-color); margin-bottom: 1.5rem;">Thông tin giao hàng</h3>
-         <form style="display: flex; flex-direction: column; gap: 1.25rem;">
-            <div>
-               <label style="display: block; font-size: 0.9rem; margin-bottom: 0.5rem;">Họ và tên</label>
-               <input type="text" placeholder="Nguyễn Văn A" style="width: 100%; padding: 0.75rem; border: 1px solid #ccc; border-radius: 0.5rem;">
+  <% if (!cartItems || cartItems.length === 0) { %>
+    <div style="text-align:center;padding:4rem 0;">
+      <p style="opacity:0.6;">Giỏ hàng trống. <a href="/" style="color:var(--first-color);">Tiếp tục mua sắm</a></p>
+    </div>
+  <% } else { %>
+  <form action="/checkout" method="POST">
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 3rem;">
+
+    <!-- Shipping info -->
+    <div style="background:#fff;border-radius:1rem;padding:2rem;box-shadow:0 10px 20px rgba(0,0,0,0.05);">
+      <h3 style="color:var(--title-color);margin-bottom:1.5rem;">Thông tin giao hàng</h3>
+      <div style="display:flex;flex-direction:column;gap:1.25rem;">
+        <div>
+          <label style="display:block;font-size:0.9rem;margin-bottom:0.5rem;font-weight:600;">Họ và tên *</label>
+          <input type="text" name="name" required placeholder="Nguyễn Văn A"
+            value="<%= typeof user !== 'undefined' && user ? user.name : '' %>"
+            style="width:100%;padding:0.75rem;border:1px solid #ccc;border-radius:0.5rem;">
+        </div>
+        <div>
+          <label style="display:block;font-size:0.9rem;margin-bottom:0.5rem;font-weight:600;">Số điện thoại *</label>
+          <input type="tel" name="phone" required placeholder="0901234567"
+            style="width:100%;padding:0.75rem;border:1px solid #ccc;border-radius:0.5rem;">
+        </div>
+        <div>
+          <label style="display:block;font-size:0.9rem;margin-bottom:0.5rem;font-weight:600;">Địa chỉ giao hàng *</label>
+          <input type="text" name="address" required placeholder="Số nhà, Tên đường, Quận/Huyện"
+            style="width:100%;padding:0.75rem;border:1px solid #ccc;border-radius:0.5rem;">
+        </div>
+        <div>
+          <label style="display:block;font-size:0.9rem;margin-bottom:0.5rem;">Ghi chú</label>
+          <textarea name="note" placeholder="Lưu ý khi giao hàng..."
+            style="width:100%;padding:0.75rem;border:1px solid #ccc;border-radius:0.5rem;height:80px;resize:none;"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- Order summary + payment -->
+    <div>
+      <div style="background:#fff;border-radius:1rem;padding:2rem;box-shadow:0 10px 20px rgba(0,0,0,0.05);margin-bottom:1.5rem;">
+        <h3 style="color:var(--title-color);margin-bottom:1.25rem;">Đơn hàng (<%= cartItems.length %> sản phẩm)</h3>
+        <% cartItems.forEach(item => { %>
+          <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1rem;padding-bottom:1rem;border-bottom:1px solid #eee;">
+            <% if (item.image) { %>
+              <img src="<%= item.image %>" style="width:50px;height:50px;object-fit:contain;border-radius:0.4rem;">
+            <% } %>
+            <div style="flex:1;">
+              <div style="font-weight:600;font-size:0.9rem;color:var(--title-color);"><%= item.name %></div>
+              <div style="font-size:0.85rem;opacity:0.7;">x<%= item.quantity %></div>
             </div>
-            <div>
-               <label style="display: block; font-size: 0.9rem; margin-bottom: 0.5rem;">Số điện thoại</label>
-               <input type="tel" placeholder="0901234567" style="width: 100%; padding: 0.75rem; border: 1px solid #ccc; border-radius: 0.5rem;">
-            </div>
-            <div>
-               <label style="display: block; font-size: 0.9rem; margin-bottom: 0.5rem;">Địa chỉ giao hàng</label>
-               <input type="text" placeholder="Số nhà, Tên đường, Quận/Huyện" style="width: 100%; padding: 0.75rem; border: 1px solid #ccc; border-radius: 0.5rem;">
-            </div>
-            <div>
-               <label style="display: block; font-size: 0.9rem; margin-bottom: 0.5rem;">Ghi chú</label>
-               <textarea placeholder="Lưu ý khi giao hàng..." style="width: 100%; padding: 0.75rem; border: 1px solid #ccc; border-radius: 0.5rem; height: 100px;"></textarea>
-            </div>
-         </form>
+            <div style="font-weight:700;color:var(--first-color);"><%= item.subtotal.toLocaleString('vi-VN') %>đ</div>
+          </div>
+        <% }) %>
+        <div style="display:flex;justify-content:space-between;font-weight:700;font-size:1.1rem;padding-top:0.5rem;">
+          <span>Tổng cộng</span>
+          <span style="color:var(--first-color);"><%= total.toLocaleString('vi-VN') %>đ</span>
+        </div>
       </div>
 
-      <div style="background: #fff; border-radius: 1rem; padding: 2rem; box-shadow: 0 10px 20px rgba(0,0,0,0.05); height: fit-content;">
-         <h3 style="color: var(--title-color); margin-bottom: 1.5rem;">Phương thức thanh toán</h3>
-         <div style="display: flex; flex-direction: column; gap: 1rem; margin-bottom: 2rem;">
-            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-               <input type="radio" name="payment" checked> COD (Thanh toán khi nhận hàng)
-            </label>
-            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-               <input type="radio" name="payment"> Chuyển khoản ngân hàng (Qua mã QR)
-            </label>
-         </div>
-         <button onclick="alert('Đặt hàng thành công!')" class="btn-buy" style="border: none; width: 100%; border-radius: 0.5rem; cursor: pointer;">Xác Nhận Đặt Hàng</button>
+      <div style="background:#fff;border-radius:1rem;padding:2rem;box-shadow:0 10px 20px rgba(0,0,0,0.05);">
+        <h3 style="color:var(--title-color);margin-bottom:1.25rem;">Phương thức thanh toán</h3>
+        <div style="display:flex;flex-direction:column;gap:1rem;margin-bottom:2rem;">
+          <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;">
+            <input type="radio" name="paymentMethod" value="COD" checked> COD (Thanh toán khi nhận hàng)
+          </label>
+          <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;">
+            <input type="radio" name="paymentMethod" value="QR"> Chuyển khoản ngân hàng (Qua mã QR)
+          </label>
+        </div>
+        <button type="submit" class="btn-buy" style="border:none;width:100%;border-radius:0.5rem;cursor:pointer;font-size:1rem;">
+          Xác Nhận Đặt Hàng
+        </button>
       </div>
-   </div>
+    </div>
+
+  </div>
+  </form>
+  <% } %>
 </main>
 
 <%- include('../partials/footer') %>

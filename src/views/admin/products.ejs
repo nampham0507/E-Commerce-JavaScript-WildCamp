@@ -1,115 +1,280 @@
 <%- include('../partials/header') %>
 
 <style>
-   .admin-container {
-      display: flex;
-      gap: 2rem;
-      max-width: 1120px;
-      margin: 0 auto;
-      padding: 8rem 1.5rem 2rem;
-   }
-   .admin-sidebar {
-      width: 280px;
-      flex-shrink: 0;
-      background: #fff;
-      border-radius: 1rem;
-      padding: 1.5rem;
-      box-shadow: 0 10px 20px rgba(0,0,0,0.05);
-      height: fit-content;
-   }
-   .admin-nav-list {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-   }
-   .admin-nav-link {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      padding: 0.75rem 1rem;
-      border-radius: 0.5rem;
-      color: var(--text-color);
-      font-weight: 500;
-      transition: all 0.3s ease;
-   }
-   .admin-nav-link:hover {
-      background: rgba(140, 200, 150, 0.1);
-      color: var(--first-color);
-   }
-   .admin-nav-link.active {
-      background: var(--gradient-color);
-      color: #fff;
-   }
-   .admin-content {
-      flex-grow: 1;
-   }
-
-   /* Responsive layout */
-   @media screen and (max-width: 768px) {
-      .admin-container {
-         flex-direction: column;
-         padding-top: 6.5rem;
-      }
-      .admin-sidebar {
-         width: 100%;
-      }
-      .admin-nav-list {
-         flex-direction: row;
-         flex-wrap: wrap;
-      }
-      .admin-nav-link {
-         flex: 1 1 140px;
-         justify-content: center;
-         font-size: 0.85rem;
-         padding: 0.5rem;
-      }
-   }
+  .admin-container { display: flex; gap: 2rem; max-width: 1120px; margin: 0 auto; padding: 8rem 1.5rem 2rem; }
+  .admin-sidebar { width: 280px; flex-shrink: 0; background: #fff; border-radius: 1rem; padding: 1.5rem; box-shadow: 0 10px 20px rgba(0,0,0,0.05); height: fit-content; }
+  .admin-nav-list { display: flex; flex-direction: column; gap: 0.5rem; }
+  .admin-nav-link { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; border-radius: 0.5rem; color: var(--text-color); font-weight: 500; transition: all 0.3s ease; }
+  .admin-nav-link:hover { background: rgba(140,200,150,0.1); color: var(--first-color); }
+  .admin-nav-link.active { background: var(--gradient-color); color: #fff; }
+  .admin-content { flex-grow: 1; }
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 999; align-items: flex-start; justify-content: center; overflow-y: auto; padding: 2rem 1rem; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: #fff; border-radius: 1rem; padding: 2rem; width: 100%; max-width: 520px; box-shadow: 0 20px 40px rgba(0,0,0,0.15); margin: auto; }
+  .modal h3 { font-family: var(--second-font); color: var(--title-color); margin-bottom: 1.5rem; }
+  .form-group { margin-bottom: 1.1rem; }
+  .form-group label { display: block; font-size: 0.88rem; font-weight: 600; margin-bottom: 0.35rem; color: var(--title-color); }
+  .form-group input, .form-group select, .form-group textarea {
+    width: 100%; padding: 0.65rem 1rem; border: 1.5px solid #ddd; border-radius: 0.5rem; font-size: 0.9rem; outline: none; transition: border 0.2s; font-family: inherit;
+  }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--first-color); }
+  .img-section { background: #f9f9f9; border: 1.5px dashed #ccc; border-radius: 0.75rem; padding: 1rem; margin-bottom: 0.75rem; }
+  .img-section label { font-size: 0.82rem; color: #777; margin-bottom: 0.4rem; }
+  .img-preview { width: 70px; height: 70px; object-fit: contain; border-radius: 0.5rem; border: 1px solid #eee; margin-top: 0.5rem; display: none; }
+  .img-preview.show { display: block; }
+  .btn-primary { background: var(--gradient-color); color: #fff; border: none; padding: 0.7rem 1.5rem; border-radius: 0.5rem; cursor: pointer; font-weight: 600; font-size: 0.95rem; }
+  .btn-cancel { background: #eee; color: #555; border: none; padding: 0.7rem 1.2rem; border-radius: 0.5rem; cursor: pointer; font-weight: 600; font-size: 0.95rem; }
+  .alert { padding: 0.75rem 1rem; border-radius: 0.5rem; margin-bottom: 1.5rem; font-size: 0.9rem; }
+  .alert-success { background: #d4edda; color: #155724; }
+  .alert-error { background: #fadbd8; color: #c0392b; }
+  @media screen and (max-width: 768px) {
+    .admin-container { flex-direction: column; padding-top: 6.5rem; }
+    .admin-sidebar { width: 100%; }
+    .admin-nav-list { flex-direction: row; flex-wrap: wrap; }
+    .admin-nav-link { flex: 1 1 140px; justify-content: center; font-size: 0.85rem; padding: 0.5rem; }
+  }
 </style>
 
 <div class="admin-container">
-   <!-- Sidebar Partial -->
-   <%- include('partials/sidebar', { activePage: 'products' }) %>
+  <%- include('partials/sidebar', { activePage: 'products' }) %>
 
-   <!-- Main content -->
-   <main class="admin-content">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-         <h2 class="home__title" style="font-family: var(--second-font); margin: 0;">Quản Lý Sản Phẩm</h2>
-         <button onclick="alert('Thêm sản phẩm mới')" class="btn-buy" style="border: none; border-radius: 0.5rem; cursor: pointer; padding: 0.6rem 1.2rem; font-size: 0.9rem;">
-            + Thêm sản phẩm
-         </button>
-      </div>
+  <main class="admin-content">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2rem;">
+      <h2 class="home__title" style="font-family:var(--second-font);margin:0;">Quản Lý Sản Phẩm</h2>
+      <button onclick="openModal('modal-add')" class="btn-buy" style="border:none;border-radius:0.5rem;cursor:pointer;padding:0.6rem 1.2rem;font-size:0.9rem;">+ Thêm sản phẩm</button>
+    </div>
 
-      <div style="background: #fff; border-radius: 1rem; padding: 2rem; box-shadow: 0 10px 20px rgba(0,0,0,0.05); overflow-x: auto;">
-         <table style="width: 100%; border-collapse: collapse; text-align: left; min-width: 600px;">
-            <thead>
-               <tr style="border-bottom: 2px solid #eee;">
-                  <th style="padding: 1rem 0.5rem; color: var(--title-color);">Hình ảnh</th>
-                  <th style="padding: 1rem 0.5rem; color: var(--title-color);">Tên sản phẩm</th>
-                  <th style="padding: 1rem 0.5rem; color: var(--title-color);">Danh mục</th>
-                  <th style="padding: 1rem 0.5rem; color: var(--title-color);">Giá tiền</th>
-                  <th style="padding: 1rem 0.5rem; color: var(--title-color);">Thao tác</th>
-               </tr>
-            </thead>
-            <tbody>
-               <% products.forEach(product => { %>
-                  <tr style="border-bottom: 1px solid #eee;">
-                     <td style="padding: 1rem 0.5rem;">
-                        <img src="<%= product.image %>" alt="<%= product.name %>" style="width: 50px; height: 50px; object-fit: contain;">
-                     </td>
-                     <td style="padding: 1rem 0.5rem; font-weight: 500;"><%= product.name %></td>
-                     <td style="padding: 1rem 0.5rem; opacity: 0.8;"><%= product.category %></td>
-                     <td style="padding: 1rem 0.5rem; color: var(--first-color); font-weight: 700;"><%= product.price %></td>
-                     <td style="padding: 1rem 0.5rem;">
-                        <button style="background: none; border: none; color: #2980b9; cursor: pointer; font-weight: 600; margin-right: 1rem;">Sửa</button>
-                        <button style="background: none; border: none; color: #c0392b; cursor: pointer; font-weight: 600;">Xóa</button>
-                     </td>
-                  </tr>
-               <% }) %>
-            </tbody>
-         </table>
-      </div>
-   </main>
+    <% if (success) { %><div class="alert alert-success"><%= success %></div><% } %>
+    <% if (error) { %><div class="alert alert-error"><%= error %></div><% } %>
+
+    <div style="background:#fff;border-radius:1rem;padding:2rem;box-shadow:0 10px 20px rgba(0,0,0,0.05);overflow-x:auto;">
+      <table style="width:100%;border-collapse:collapse;text-align:left;min-width:600px;">
+        <thead>
+          <tr style="border-bottom:2px solid #eee;">
+            <th style="padding:0.75rem 0.5rem;color:var(--title-color);">Ảnh</th>
+            <th style="padding:0.75rem 0.5rem;color:var(--title-color);">Tên sản phẩm</th>
+            <th style="padding:0.75rem 0.5rem;color:var(--title-color);">Danh mục</th>
+            <th style="padding:0.75rem 0.5rem;color:var(--title-color);">Giá (VNĐ)</th>
+            <th style="padding:0.75rem 0.5rem;color:var(--title-color);">Thao tác</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (products.length === 0) { %>
+            <tr><td colspan="5" style="padding:2rem;text-align:center;opacity:0.5;">Chưa có sản phẩm nào</td></tr>
+          <% } %>
+          <% products.forEach(p => { %>
+            <tr style="border-bottom:1px solid #eee;">
+              <td style="padding:0.75rem 0.5rem;">
+                <% if (p.image) { %>
+                  <img src="<%= p.image %>" alt="<%= p.name %>" style="width:52px;height:52px;object-fit:contain;border-radius:0.4rem;border:1px solid #eee;">
+                <% } else { %>
+                  <div style="width:52px;height:52px;background:#f0f0f0;border-radius:0.4rem;display:flex;align-items:center;justify-content:center;color:#aaa;font-size:1.2rem;"><i class="ri-image-line"></i></div>
+                <% } %>
+              </td>
+              <td style="padding:0.75rem 0.5rem;font-weight:500;max-width:180px;"><%= p.name %></td>
+              <td style="padding:0.75rem 0.5rem;opacity:0.8;"><%= p.category %></td>
+              <td style="padding:0.75rem 0.5rem;color:var(--first-color);font-weight:700;"><%= p.price.toLocaleString('vi-VN') %>đ</td>
+              <td style="padding:0.75rem 0.5rem;white-space:nowrap;">
+                <button onclick="openEditModal(
+                  '<%= p._id %>',
+                  `<%= p.name.replace(/`/g,'\\`') %>`,
+                  '<%= p.category %>',
+                  <%= p.price %>,
+                  `<%= (p.description || '').replace(/`/g,'\\`') %>`,
+                  `<%= (p.image || '').replace(/`/g,'\\`') %>`
+                )" style="background:none;border:none;color:#2980b9;cursor:pointer;font-weight:600;margin-right:1rem;">Sửa</button>
+                <form action="/admin/products/delete/<%= p._id %>" method="POST" style="display:inline"
+                  onsubmit="return confirm('Xác nhận xóa sản phẩm này?')">
+                  <button type="submit" style="background:none;border:none;color:#c0392b;cursor:pointer;font-weight:600;">Xóa</button>
+                </form>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </main>
 </div>
+
+<!-- Modal Thêm -->
+<div class="modal-overlay" id="modal-add">
+  <div class="modal">
+    <h3>Thêm Sản Phẩm Mới</h3>
+    <form action="/admin/products" method="POST" enctype="multipart/form-data">
+      <div class="form-group">
+        <label>Tên sản phẩm *</label>
+        <input type="text" name="name" placeholder="VD: Lều cắm trại 4 người" required>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+        <div class="form-group">
+          <label>Danh mục *</label>
+          <select name="category" required>
+            <option value="">-- Chọn danh mục --</option>
+            <% categories.forEach(c => { %>
+              <option value="<%= c.name %>"><%= c.name %></option>
+            <% }) %>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Giá (VNĐ) *</label>
+          <input type="number" name="price" placeholder="350000" min="0" required>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Mô tả</label>
+        <textarea name="description" rows="2" placeholder="Mô tả sản phẩm..."></textarea>
+      </div>
+
+      <div style="margin-bottom:0.5rem;font-size:0.88rem;font-weight:600;color:var(--title-color);">Hình ảnh sản phẩm</div>
+      <div class="img-section">
+        <label>Nhập link URL hình ảnh</label>
+        <input type="url" name="imageUrl" id="add-imageUrl" placeholder="https://..." oninput="previewFromUrl(this,'add-url-preview')">
+        <img id="add-url-preview" class="img-preview" src="" alt="preview">
+      </div>
+      <div style="text-align:center;color:#aaa;font-size:0.85rem;margin:-0.25rem 0 0.5rem;">— hoặc —</div>
+      <div class="img-section">
+        <label>Tải lên từ máy tính</label>
+        <input type="file" name="imageFile" id="add-imageFile" accept="image/*" onchange="previewFromFile(this,'add-file-preview')">
+        <img id="add-file-preview" class="img-preview" src="" alt="preview">
+      </div>
+
+      <div style="display:flex;justify-content:flex-end;gap:0.5rem;margin-top:1rem;">
+        <button type="button" class="btn-cancel" onclick="closeModal('modal-add')">Hủy</button>
+        <button type="submit" class="btn-primary">Thêm sản phẩm</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal Sửa -->
+<div class="modal-overlay" id="modal-edit">
+  <div class="modal">
+    <h3>Chỉnh Sửa Sản Phẩm</h3>
+    <form id="form-edit" action="" method="POST" enctype="multipart/form-data">
+      <input type="hidden" name="existingImage" id="edit-existingImage">
+      <div class="form-group">
+        <label>Tên sản phẩm *</label>
+        <input type="text" name="name" id="edit-name" required>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+        <div class="form-group">
+          <label>Danh mục *</label>
+          <select name="category" id="edit-category" required>
+            <option value="">-- Chọn danh mục --</option>
+            <% categories.forEach(c => { %>
+              <option value="<%= c.name %>"><%= c.name %></option>
+            <% }) %>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Giá (VNĐ) *</label>
+          <input type="number" name="price" id="edit-price" min="0" required>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Mô tả</label>
+        <textarea name="description" id="edit-description" rows="2"></textarea>
+      </div>
+
+      <div style="margin-bottom:0.5rem;font-size:0.88rem;font-weight:600;color:var(--title-color);">Hình ảnh sản phẩm</div>
+
+      <!-- URL section — shown when current image is NOT an upload -->
+      <div class="img-section" id="edit-url-section">
+        <label>Link URL hình ảnh hiện tại / mới</label>
+        <input type="url" name="imageUrl" id="edit-imageUrl" placeholder="https://..." oninput="previewFromUrl(this,'edit-url-preview')">
+        <img id="edit-url-preview" class="img-preview" src="" alt="preview">
+      </div>
+      <div style="text-align:center;color:#aaa;font-size:0.85rem;margin:-0.25rem 0 0.5rem;">— hoặc —</div>
+      <!-- Upload section — shown with current file preview when image IS an upload -->
+      <div class="img-section" id="edit-upload-section">
+        <label>Tải lên file mới từ máy tính</label>
+        <!-- Current uploaded image preview -->
+        <img id="edit-current-upload-preview" class="img-preview" src="" alt="ảnh hiện tại">
+        <div id="edit-current-upload-label" style="font-size:0.8rem;color:#888;margin-bottom:0.4rem;display:none;">Ảnh hiện tại (không chọn file mới để giữ nguyên)</div>
+        <input type="file" name="imageFile" id="edit-imageFile" accept="image/*" onchange="previewFromFile(this,'edit-file-preview')">
+        <img id="edit-file-preview" class="img-preview" src="" alt="preview mới">
+      </div>
+
+      <div style="display:flex;justify-content:flex-end;gap:0.5rem;margin-top:1rem;">
+        <button type="button" class="btn-cancel" onclick="closeModal('modal-edit')">Hủy</button>
+        <button type="submit" class="btn-primary">Cập nhật</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  function openModal(id) { document.getElementById(id).classList.add('open'); }
+  function closeModal(id) {
+    document.getElementById(id).classList.remove('open');
+    // reset file input & previews
+    const form = document.getElementById(id)?.querySelector('form') || document.getElementById('form-' + id.replace('modal-',''));
+    if (form) form.reset();
+    document.querySelectorAll('#' + id + ' .img-preview').forEach(el => { el.src=''; el.classList.remove('show'); });
+  }
+
+  document.querySelectorAll('.modal-overlay').forEach(el => {
+    el.addEventListener('click', function(e) { if (e.target === this) { this.classList.remove('open'); } });
+  });
+
+  function previewFromUrl(input, previewId) {
+    const img = document.getElementById(previewId);
+    if (input.value.trim()) { img.src = input.value.trim(); img.classList.add('show'); }
+    else { img.src = ''; img.classList.remove('show'); }
+  }
+
+  function previewFromFile(input, previewId) {
+    const img = document.getElementById(previewId);
+    if (input.files && input.files[0]) {
+      const reader = new FileReader();
+      reader.onload = e => { img.src = e.target.result; img.classList.add('show'); };
+      reader.readAsDataURL(input.files[0]);
+    } else {
+      img.src = ''; img.classList.remove('show');
+    }
+  }
+
+  function openEditModal(id, name, category, price, description, image) {
+    document.getElementById('form-edit').action = '/admin/products/edit/' + id;
+    document.getElementById('edit-name').value = name;
+    document.getElementById('edit-price').value = price;
+    document.getElementById('edit-description').value = description;
+    document.getElementById('edit-existingImage').value = image;
+
+    // Set category
+    const sel = document.getElementById('edit-category');
+    for (let opt of sel.options) { opt.selected = opt.value === category; }
+
+    // Reset image fields
+    document.getElementById('edit-imageUrl').value = '';
+    document.getElementById('edit-imageFile').value = '';
+    document.getElementById('edit-url-preview').src = ''; document.getElementById('edit-url-preview').classList.remove('show');
+    document.getElementById('edit-file-preview').src = ''; document.getElementById('edit-file-preview').classList.remove('show');
+    document.getElementById('edit-current-upload-preview').src = ''; document.getElementById('edit-current-upload-preview').classList.remove('show');
+    document.getElementById('edit-current-upload-label').style.display = 'none';
+
+    const isUpload = image && image.startsWith('/assets/img/uploads/');
+
+    if (isUpload) {
+      // Show current uploaded image in the upload section
+      document.getElementById('edit-current-upload-preview').src = image;
+      document.getElementById('edit-current-upload-preview').classList.add('show');
+      document.getElementById('edit-current-upload-label').style.display = 'block';
+      document.getElementById('edit-imageUrl').value = '';
+    } else if (image) {
+      // Show URL in the URL field
+      document.getElementById('edit-imageUrl').value = image;
+      document.getElementById('edit-url-preview').src = image;
+      document.getElementById('edit-url-preview').classList.add('show');
+    }
+
+    openModal('modal-edit');
+  }
+
+  <% if (error || success) { %>
+  setTimeout(() => { document.querySelectorAll('.alert').forEach(a => a.style.display='none'); }, 4000);
+  <% } %>
+</script>
 
 <%- include('../partials/footer') %>
 <%- include('../partials/scripts') %>

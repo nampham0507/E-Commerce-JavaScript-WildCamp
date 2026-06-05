@@ -1,5 +1,4 @@
 const User = require('../models/User');
-const bcrypt = require('bcryptjs');
 
 // Get all users
 exports.getUsers = async (req, res) => {
@@ -15,25 +14,17 @@ exports.getUsers = async (req, res) => {
 exports.addUser = async (req, res) => {
     try {
         const { name, email, password, role } = req.body;
-        
+
         const userExists = await User.findOne({ email });
         if (userExists) {
             const users = await User.find({});
             return res.render('admin/users', { users, error: 'Email đã tồn tại trong hệ thống.', success: null });
         }
 
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
-
-        const newUser = new User({
-            name,
-            email,
-            password: hashedPassword,
-            role
-        });
-
+        // Password is hashed automatically by the pre-save hook in the User model
+        const newUser = new User({ name, email, password, role });
         await newUser.save();
-        
+
         const users = await User.find({});
         res.render('admin/users', { users, error: null, success: 'Thêm người dùng thành công!' });
     } catch (error) {
@@ -42,23 +33,31 @@ exports.addUser = async (req, res) => {
     }
 };
 
-// Edit user (update role, name, email)
+// Edit user (update name, email, role and optionally password)
 exports.editUser = async (req, res) => {
     try {
         const { id } = req.params;
         const { name, email, role, password } = req.body;
 
-        const updateData = { name, email, role };
-
-        // If password is provided, hash it
-        if (password && password.trim() !== '') {
-            const salt = await bcrypt.genSalt(10);
-            updateData.password = await bcrypt.hash(password, salt);
+        const user = await User.findById(id);
+        if (!user) {
+            const users = await User.find({});
+            return res.render('admin/users', { users, error: 'Không tìm thấy người dùng.', success: null });
         }
 
-        await User.findByIdAndUpdate(id, updateData);
+        user.name = name;
+        user.email = email;
+        user.role = role;
 
-        // If the admin edited their own role/details, update their session
+        // Only update password when a new one is provided.
+        // Assigning it marks the field as modified so the pre-save hook hashes it.
+        if (password && password.trim() !== '') {
+            user.password = password.trim();
+        }
+
+        await user.save();
+
+        // If the admin edited their own details, refresh the session copy
         if (req.session.user && req.session.user.id === id) {
             req.session.user.name = name;
             req.session.user.email = email;

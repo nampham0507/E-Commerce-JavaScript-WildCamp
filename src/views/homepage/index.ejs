@@ -48,12 +48,15 @@
                <img src="<%= product.image %>" alt="<%= product.name %>" class="product-img">
                <div>
                   <h3 class="product-title"><%= product.name %></h3>
-                  <p style="font-size: 0.85rem; color: #666; margin-bottom: 0.75rem;"><%= product.desc %></p>
-                  <p style="font-size: 0.9rem; color: #e67e22; margin-bottom: 0.5rem;">★ <%= product.rating %> / 5.0</p>
+                  <p style="font-size: 0.85rem; color: #666; margin-bottom: 0.75rem;"><%= product.description || product.desc || '' %></p>
+                  <% if (product.rating) { %><p style="font-size: 0.9rem; color: #e67e22; margin-bottom: 0.5rem;">★ <%= product.rating %> / 5.0</p><% } %>
                </div>
                <div>
-                  <div class="product-price"><%= product.price %></div>
-                  <a href="/cart" class="btn-buy">Thêm Vào Giỏ</a>
+                  <div class="product-price"><%= typeof product.price === 'number' ? product.price.toLocaleString('vi-VN') + 'đ' : product.price %></div>
+                  <form action="/cart/add" method="POST">
+                     <input type="hidden" name="productId" value="<%= product._id %>">
+                     <button type="submit" class="btn-buy" style="width:100%;border:none;cursor:pointer;">Thêm Vào Giỏ</button>
+                  </form>
                </div>
             </div>
          <% }) %>

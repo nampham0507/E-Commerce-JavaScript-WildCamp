@@ -1,107 +1,133 @@
 <%- include('../partials/header') %>
 
 <style>
-   .admin-container {
-      display: flex;
-      gap: 2rem;
-      max-width: 1120px;
-      margin: 0 auto;
-      padding: 8rem 1.5rem 2rem;
-   }
-   .admin-sidebar {
-      width: 280px;
-      flex-shrink: 0;
-      background: #fff;
-      border-radius: 1rem;
-      padding: 1.5rem;
-      box-shadow: 0 10px 20px rgba(0,0,0,0.05);
-      height: fit-content;
-   }
-   .admin-nav-list {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-   }
-   .admin-nav-link {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      padding: 0.75rem 1rem;
-      border-radius: 0.5rem;
-      color: var(--text-color);
-      font-weight: 500;
-      transition: all 0.3s ease;
-   }
-   .admin-nav-link:hover {
-      background: rgba(140, 200, 150, 0.1);
-      color: var(--first-color);
-   }
-   .admin-nav-link.active {
-      background: var(--gradient-color);
-      color: #fff;
-   }
-   .admin-content {
-      flex-grow: 1;
-   }
-
-   /* Responsive layout */
-   @media screen and (max-width: 768px) {
-      .admin-container {
-         flex-direction: column;
-         padding-top: 6.5rem;
-      }
-      .admin-sidebar {
-         width: 100%;
-      }
-      .admin-nav-list {
-         flex-direction: row;
-         flex-wrap: wrap;
-      }
-      .admin-nav-link {
-         flex: 1 1 140px;
-         justify-content: center;
-         font-size: 0.85rem;
-         padding: 0.5rem;
-      }
-   }
+  .admin-container { display: flex; gap: 2rem; max-width: 1120px; margin: 0 auto; padding: 8rem 1.5rem 2rem; }
+  .admin-sidebar { width: 280px; flex-shrink: 0; background: #fff; border-radius: 1rem; padding: 1.5rem; box-shadow: 0 10px 20px rgba(0,0,0,0.05); height: fit-content; }
+  .admin-nav-list { display: flex; flex-direction: column; gap: 0.5rem; }
+  .admin-nav-link { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; border-radius: 0.5rem; color: var(--text-color); font-weight: 500; transition: all 0.3s ease; }
+  .admin-nav-link:hover { background: rgba(140,200,150,0.1); color: var(--first-color); }
+  .admin-nav-link.active { background: var(--gradient-color); color: #fff; }
+  .admin-content { flex-grow: 1; }
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 999; align-items: center; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: #fff; border-radius: 1rem; padding: 2rem; width: 100%; max-width: 420px; box-shadow: 0 20px 40px rgba(0,0,0,0.15); }
+  .modal h3 { font-family: var(--second-font); color: var(--title-color); margin-bottom: 1.5rem; }
+  .form-group { margin-bottom: 1.25rem; }
+  .form-group label { display: block; font-size: 0.9rem; font-weight: 600; margin-bottom: 0.4rem; color: var(--title-color); }
+  .form-group input { width: 100%; padding: 0.7rem 1rem; border: 1.5px solid #ddd; border-radius: 0.5rem; font-size: 0.95rem; outline: none; transition: border 0.2s; }
+  .form-group input:focus { border-color: var(--first-color); }
+  .btn-primary { background: var(--gradient-color); color: #fff; border: none; padding: 0.7rem 1.5rem; border-radius: 0.5rem; cursor: pointer; font-weight: 600; font-size: 0.95rem; }
+  .btn-cancel { background: #eee; color: #555; border: none; padding: 0.7rem 1.2rem; border-radius: 0.5rem; cursor: pointer; font-weight: 600; font-size: 0.95rem; margin-left: 0.5rem; }
+  .alert { padding: 0.75rem 1rem; border-radius: 0.5rem; margin-bottom: 1.5rem; font-size: 0.9rem; }
+  .alert-success { background: #d4edda; color: #155724; }
+  .alert-error { background: #fadbd8; color: #c0392b; }
+  @media screen and (max-width: 768px) {
+    .admin-container { flex-direction: column; padding-top: 6.5rem; }
+    .admin-sidebar { width: 100%; }
+    .admin-nav-list { flex-direction: row; flex-wrap: wrap; }
+    .admin-nav-link { flex: 1 1 140px; justify-content: center; font-size: 0.85rem; padding: 0.5rem; }
+  }
 </style>
 
 <div class="admin-container">
-   <!-- Sidebar Partial -->
-   <%- include('partials/sidebar', { activePage: 'categories' }) %>
+  <%- include('partials/sidebar', { activePage: 'categories' }) %>
 
-   <!-- Main content -->
-   <main class="admin-content">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-         <h2 class="home__title" style="font-family: var(--second-font); margin: 0;">Quản Lý Danh Mục</h2>
-         <button onclick="alert('Thêm danh mục mới')" class="btn-buy" style="border: none; border-radius: 0.5rem; cursor: pointer; padding: 0.6rem 1.2rem; font-size: 0.9rem;">
-            + Thêm danh mục
-         </button>
-      </div>
+  <main class="admin-content">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2rem;">
+      <h2 class="home__title" style="font-family:var(--second-font);margin:0;">Quản Lý Danh Mục</h2>
+      <button onclick="openModal('modal-add')" class="btn-buy" style="border:none;border-radius:0.5rem;cursor:pointer;padding:0.6rem 1.2rem;font-size:0.9rem;">+ Thêm danh mục</button>
+    </div>
 
-      <div style="background: #fff; border-radius: 1rem; padding: 2rem; box-shadow: 0 10px 20px rgba(0,0,0,0.05); overflow-x: auto;">
-         <table style="width: 100%; border-collapse: collapse; text-align: left; min-width: 600px;">
-            <thead>
-               <tr style="border-bottom: 2px solid #eee;">
-                  <th style="padding: 1rem 0.5rem; color: var(--title-color); width: 70%;">Tên danh mục</th>
-                  <th style="padding: 1rem 0.5rem; color: var(--title-color);">Thao tác</th>
-               </tr>
-            </thead>
-            <tbody>
-               <% categories.forEach(category => { %>
-                  <tr style="border-bottom: 1px solid #eee;">
-                     <td style="padding: 1rem 0.5rem; font-weight: 500;"><%= category %></td>
-                     <td style="padding: 1rem 0.5rem;">
-                        <button style="background: none; border: none; color: #2980b9; cursor: pointer; font-weight: 600; margin-right: 1rem;">Sửa</button>
-                        <button style="background: none; border: none; color: #c0392b; cursor: pointer; font-weight: 600;">Xóa</button>
-                     </td>
-                  </tr>
-               <% }) %>
-            </tbody>
-         </table>
-      </div>
-   </main>
+    <% if (success) { %><div class="alert alert-success"><%= success %></div><% } %>
+    <% if (error) { %><div class="alert alert-error"><%= error %></div><% } %>
+
+    <div style="background:#fff;border-radius:1rem;padding:2rem;box-shadow:0 10px 20px rgba(0,0,0,0.05);overflow-x:auto;">
+      <table style="width:100%;border-collapse:collapse;text-align:left;min-width:400px;">
+        <thead>
+          <tr style="border-bottom:2px solid #eee;">
+            <th style="padding:1rem 0.5rem;color:var(--title-color);width:60%;">Tên danh mục</th>
+            <th style="padding:1rem 0.5rem;color:var(--title-color);">Ngày tạo</th>
+            <th style="padding:1rem 0.5rem;color:var(--title-color);">Thao tác</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (categories.length === 0) { %>
+            <tr><td colspan="3" style="padding:2rem;text-align:center;opacity:0.5;">Chưa có danh mục nào</td></tr>
+          <% } %>
+          <% categories.forEach(cat => { %>
+            <tr style="border-bottom:1px solid #eee;">
+              <td style="padding:1rem 0.5rem;font-weight:500;"><%= cat.name %></td>
+              <td style="padding:1rem 0.5rem;opacity:0.7;font-size:0.85rem;"><%= new Date(cat.createdAt).toLocaleDateString('vi-VN') %></td>
+              <td style="padding:1rem 0.5rem;">
+                <button class="btn-edit-cat" data-id="<%= cat._id %>" data-name="<%= cat.name %>"
+                  style="background:none;border:none;color:#2980b9;cursor:pointer;font-weight:600;margin-right:1rem;">Sửa</button>
+                <form action="/admin/categories/delete/<%= cat._id %>" method="POST" style="display:inline"
+                  onsubmit="return confirm('Xác nhận xóa danh mục này?')">
+                  <button type="submit" style="background:none;border:none;color:#c0392b;cursor:pointer;font-weight:600;">Xóa</button>
+                </form>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </main>
 </div>
+
+<!-- Modal Thêm -->
+<div class="modal-overlay" id="modal-add">
+  <div class="modal">
+    <h3>Thêm Danh Mục Mới</h3>
+    <form action="/admin/categories" method="POST">
+      <div class="form-group">
+        <label>Tên danh mục</label>
+        <input type="text" name="name" placeholder="VD: Lều Trại" required>
+      </div>
+      <div style="display:flex;justify-content:flex-end;">
+        <button type="button" class="btn-cancel" onclick="closeModal('modal-add')">Hủy</button>
+        <button type="submit" class="btn-primary" style="margin-left:0.5rem;">Thêm</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal Sửa -->
+<div class="modal-overlay" id="modal-edit">
+  <div class="modal">
+    <h3>Chỉnh Sửa Danh Mục</h3>
+    <form id="form-edit" action="" method="POST">
+      <div class="form-group">
+        <label>Tên danh mục</label>
+        <input type="text" name="name" id="edit-name" required>
+      </div>
+      <div style="display:flex;justify-content:flex-end;">
+        <button type="button" class="btn-cancel" onclick="closeModal('modal-edit')">Hủy</button>
+        <button type="submit" class="btn-primary" style="margin-left:0.5rem;">Lưu</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  function openModal(id) { document.getElementById(id).classList.add('open'); }
+  function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+  function openEditModal(id, name) {
+    document.getElementById('form-edit').action = '/admin/categories/edit/' + id;
+    document.getElementById('edit-name').value = name;
+    openModal('modal-edit');
+  }
+  document.querySelectorAll('.btn-edit-cat').forEach(btn => {
+    btn.addEventListener('click', function() {
+      openEditModal(this.dataset.id, this.dataset.name);
+    });
+  });
+  document.querySelectorAll('.modal-overlay').forEach(el => {
+    el.addEventListener('click', function(e) { if (e.target === this) this.classList.remove('open'); });
+  });
+  <% if (error || success) { %>
+  setTimeout(() => { document.querySelectorAll('.alert').forEach(a => a.style.display='none'); }, 4000);
+  <% } %>
+</script>
 
 <%- include('../partials/footer') %>
 <%- include('../partials/scripts') %>
