@@ -1,0 +1,65 @@
+<%- include('../partials/header') %>
+
+<main class="main">
+   <!--==================== HOME ====================-->
+   <section class="home">
+      <div class="home__container container">
+         <div class="home__content">
+            <div class="home__data">
+               <h3 class="home__subtitle">
+                  TRẢI NGHIỆM ĐỂ ĐỜI
+               </h3>
+
+               <h1 class="home__title">
+                  Hòa Mình Vào <br>
+                  Thiên Nhiên
+               </h1>
+
+               <p class="home__description">
+                  Cắm trại bất cứ lúc nào, bất cứ nơi đâu mà không gặp rắc rối và tận hưởng cuộc phiêu lưu lý tưởng của bạn.
+               </p>
+
+               <a href="#products" class="home__button" style="border-radius: 0.75rem;">
+                  Khám Phá Thiết Bị
+               </a>
+            </div>
+
+            <img src="/assets/img/bird-1.svg" alt="image" class="home__bird-1">
+            <img src="/assets/img/bird-2.svg" alt="image" class="home__bird-2">
+         </div>
+
+         <div class="home__images">
+            <img src="/assets/img/img-4.svg" alt="image" class="home__img-4">
+            <img src="/assets/img/img-3.svg" alt="image" class="home__img-3">
+            <img src="/assets/img/img-2.svg" alt="image" class="home__img-2">
+            <img src="/assets/img/img-1.svg" alt="image" class="home__img-1">
+         </div>
+      </div>
+   </section>
+
+   <!--==================== PRODUCTS ====================-->
+   <section id="products" style="padding-top: 5rem;">
+      <h2 class="section-title">Sản Phẩm Nổi Bật</h2>
+      <p style="text-align: center; color: var(--text-color); opacity: 0.8; max-width: 600px; margin: 0.5rem auto 2rem;">Trang bị dã ngoại cao cấp cho hành trình của bạn.</p>
+      
+      <div class="product-grid">
+         <% products.forEach(product => { %>
+            <div class="product-card">
+               <img src="<%= product.image %>" alt="<%= product.name %>" class="product-img">
+               <div>
+                  <h3 class="product-title"><%= product.name %></h3>
+                  <p style="font-size: 0.85rem; color: #666; margin-bottom: 0.75rem;"><%= product.desc %></p>
+                  <p style="font-size: 0.9rem; color: #e67e22; margin-bottom: 0.5rem;">★ <%= product.rating %> / 5.0</p>
+               </div>
+               <div>
+                  <div class="product-price"><%= product.price %></div>
+                  <a href="/cart" class="btn-buy">Thêm Vào Giỏ</a>
+               </div>
+            </div>
+         <% }) %>
+      </div>
+   </section>
+</main>
+
+<%- include('../partials/footer') %>
+<%- include('../partials/scripts') %>

@@ -1,0 +1,41 @@
+<aside class="admin-sidebar">
+   <h3 style="color: var(--title-color); font-family: var(--second-font); margin-bottom: 1.5rem; padding-left: 0.5rem;">Admin Panel</h3>
+   <ul class="admin-nav-list">
+      <li>
+         <a href="/admin" class="admin-nav-link <%= activePage === 'dashboard' ? 'active' : '' %>">
+            <i class="ri-dashboard-line"></i>
+            <span>Tổng quan</span>
+         </a>
+      </li>
+      <li>
+         <a href="/admin/products" class="admin-nav-link <%= activePage === 'products' ? 'active' : '' %>">
+            <i class="ri-shopping-bag-3-line"></i>
+            <span>Quản lý sản phẩm</span>
+         </a>
+      </li>
+      <li>
+         <a href="/admin/orders" class="admin-nav-link <%= activePage === 'orders' ? 'active' : '' %>">
+            <i class="ri-bill-line"></i>
+            <span>Quản lý đơn hàng</span>
+         </a>
+      </li>
+      <li>
+         <a href="/admin/users" class="admin-nav-link <%= activePage === 'users' ? 'active' : '' %>">
+            <i class="ri-user-settings-line"></i>
+            <span>Quản lý người dùng</span>
+         </a>
+      </li>
+      <li>
+         <a href="/admin/reports" class="admin-nav-link <%= activePage === 'reports' ? 'active' : '' %>">
+            <i class="ri-bar-chart-box-line"></i>
+            <span>Thống kê báo cáo</span>
+         </a>
+      </li>
+      <li>
+         <a href="/admin/categories" class="admin-nav-link <%= activePage === 'categories' ? 'active' : '' %>">
+            <i class="ri-list-check-2"></i>
+            <span>Quản lý danh mục</span>
+         </a>
+      </li>
+   </ul>
+</aside>

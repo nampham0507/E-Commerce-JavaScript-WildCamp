@@ -1,0 +1,50 @@
+<%- include('../partials/header') %>
+
+<main class="main" style="padding-top: 8rem; min-height: 80vh; max-width: 1120px; margin: 0 auto; padding-inline: 1.5rem;">
+   <h2 class="home__title" style="margin-bottom: 2rem; font-family: var(--second-font);">Giỏ Hàng Của Bạn</h2>
+
+   <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 3rem;">
+      <div style="background: #fff; border-radius: 1rem; padding: 2rem; box-shadow: 0 10px 20px rgba(0,0,0,0.05);">
+         <% if (cartItems && cartItems.length > 0) { %>
+            <% cartItems.forEach(item => { %>
+               <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #eee; padding-bottom: 1.5rem; margin-bottom: 1.5rem;">
+                  <div style="display: flex; align-items: center; gap: 1rem;">
+                     <img src="<%= item.image %>" alt="<%= item.name %>" style="width: 80px; height: 80px; object-fit: contain;">
+                     <div>
+                        <h4 style="color: var(--title-color); margin-bottom: 0.25rem;"><%= item.name %></h4>
+                        <span style="color: var(--first-color); font-weight: 700;"><%= item.price %></span>
+                     </div>
+                  </div>
+                  <div style="display: flex; align-items: center; gap: 0.5rem;">
+                     <button style="border: 1px solid #ccc; padding: 0.25rem 0.5rem; background: #fff; cursor: pointer;">-</button>
+                     <span>1</span>
+                     <button style="border: 1px solid #ccc; padding: 0.25rem 0.5rem; background: #fff; cursor: pointer;">+</button>
+                  </div>
+               </div>
+            <% }) %>
+         <% } else { %>
+            <p>Không có sản phẩm nào trong giỏ hàng.</p>
+         <% } %>
+      </div>
+
+      <div style="background: #fff; border-radius: 1rem; padding: 2rem; box-shadow: 0 10px 20px rgba(0,0,0,0.05); height: fit-content;">
+         <h3 style="color: var(--title-color); margin-bottom: 1.5rem;">Tóm tắt đơn hàng</h3>
+         <div style="display: flex; justify-content: space-between; margin-bottom: 1rem; opacity: 0.8;">
+            <span>Tạm tính</span>
+            <span>2,300,000đ</span>
+         </div>
+         <div style="display: flex; justify-content: space-between; margin-bottom: 1.5rem; opacity: 0.8;">
+            <span>Phí vận chuyển</span>
+            <span>Miễn phí</span>
+         </div>
+         <div style="display: flex; justify-content: space-between; font-weight: 700; font-size: 1.25rem; border-top: 1px solid #eee; padding-top: 1.5rem; margin-bottom: 2rem;">
+            <span>Tổng cộng</span>
+            <span style="color: var(--first-color);">2,300,000đ</span>
+         </div>
+         <a href="/checkout" class="btn-buy" style="border-radius: 0.5rem;">Tiến Hành Thanh Toán</a>
+      </div>
+   </div>
+</main>
+
+<%- include('../partials/footer') %>
+<%- include('../partials/scripts') %>

@@ -1,0 +1,100 @@
+<%- include('../partials/header') %>
+
+<style>
+   .admin-container {
+      display: flex;
+      gap: 2rem;
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 8rem 1.5rem 2rem;
+   }
+   .admin-sidebar {
+      width: 280px;
+      flex-shrink: 0;
+      background: #fff;
+      border-radius: 1rem;
+      padding: 1.5rem;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+      height: fit-content;
+   }
+   .admin-nav-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+   }
+   .admin-nav-link {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem 1rem;
+      border-radius: 0.5rem;
+      color: var(--text-color);
+      font-weight: 500;
+      transition: all 0.3s ease;
+   }
+   .admin-nav-link:hover {
+      background: rgba(140, 200, 150, 0.1);
+      color: var(--first-color);
+   }
+   .admin-nav-link.active {
+      background: var(--gradient-color);
+      color: #fff;
+   }
+   .admin-content {
+      flex-grow: 1;
+   }
+
+   /* Responsive layout */
+   @media screen and (max-width: 768px) {
+      .admin-container {
+         flex-direction: column;
+         padding-top: 6.5rem;
+      }
+      .admin-sidebar {
+         width: 100%;
+      }
+      .admin-nav-list {
+         flex-direction: row;
+         flex-wrap: wrap;
+      }
+      .admin-nav-link {
+         flex: 1 1 140px;
+         justify-content: center;
+         font-size: 0.85rem;
+         padding: 0.5rem;
+      }
+   }
+</style>
+
+<div class="admin-container">
+   <!-- Sidebar Partial -->
+   <%- include('partials/sidebar', { activePage: 'dashboard' }) %>
+
+   <!-- Main content -->
+   <main class="admin-content">
+      <h2 class="home__title" style="margin-bottom: 2rem; font-family: var(--second-font);">Tổng quan hệ thống</h2>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 3rem;">
+         <div style="background: #fff; padding: 1.5rem; border-radius: 0.75rem; box-shadow: 0 5px 15px rgba(0,0,0,0.02); border-left: 5px solid var(--first-color);">
+            <span style="font-size: 0.9rem; opacity: 0.7;">Tổng sản phẩm</span>
+            <h3 style="font-size: 1.8rem; color: var(--title-color); margin-top: 0.5rem;"><%= products.length %></h3>
+         </div>
+         <div style="background: #fff; padding: 1.5rem; border-radius: 0.75rem; box-shadow: 0 5px 15px rgba(0,0,0,0.02); border-left: 5px solid #e67e22;">
+            <span style="font-size: 0.9rem; opacity: 0.7;">Đơn hàng mới</span>
+            <h3 style="font-size: 1.8rem; color: var(--title-color); margin-top: 0.5rem;">12</h3>
+         </div>
+         <div style="background: #fff; padding: 1.5rem; border-radius: 0.75rem; box-shadow: 0 5px 15px rgba(0,0,0,0.02); border-left: 5px solid #2980b9;">
+            <span style="font-size: 0.9rem; opacity: 0.7;">Doanh thu tháng</span>
+            <h3 style="font-size: 1.8rem; color: var(--title-color); margin-top: 0.5rem;">45,800,000đ</h3>
+         </div>
+      </div>
+
+      <div style="background: #fff; border-radius: 1rem; padding: 2rem; box-shadow: 0 10px 20px rgba(0,0,0,0.05); text-align: center; color: var(--text-color);">
+         <h3 style="color: var(--title-color); margin-bottom: 1rem; font-family: var(--second-font);">Chào mừng đến với Trang quản trị WildCamp</h3>
+         <p style="opacity: 0.8; font-size: 0.95rem;">Sử dụng thanh Menu bên trái để bắt đầu quản lý các hạng mục của hệ thống dã ngoại.</p>
+      </div>
+   </main>
+</div>
+
+<%- include('../partials/footer') %>
+<%- include('../partials/scripts') %>

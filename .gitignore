@@ -1,0 +1,20 @@
+# Dependencies
+node_modules/
+
+# Environment variables
+.env
+
+# Uploaded images
+src/views/public/images/uploads/*
+!src/views/public/images/uploads/.gitkeep
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# Project document
+quota_rule.md

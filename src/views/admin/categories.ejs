@@ -1,0 +1,107 @@
+<%- include('../partials/header') %>
+
+<style>
+   .admin-container {
+      display: flex;
+      gap: 2rem;
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 8rem 1.5rem 2rem;
+   }
+   .admin-sidebar {
+      width: 280px;
+      flex-shrink: 0;
+      background: #fff;
+      border-radius: 1rem;
+      padding: 1.5rem;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+      height: fit-content;
+   }
+   .admin-nav-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+   }
+   .admin-nav-link {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem 1rem;
+      border-radius: 0.5rem;
+      color: var(--text-color);
+      font-weight: 500;
+      transition: all 0.3s ease;
+   }
+   .admin-nav-link:hover {
+      background: rgba(140, 200, 150, 0.1);
+      color: var(--first-color);
+   }
+   .admin-nav-link.active {
+      background: var(--gradient-color);
+      color: #fff;
+   }
+   .admin-content {
+      flex-grow: 1;
+   }
+
+   /* Responsive layout */
+   @media screen and (max-width: 768px) {
+      .admin-container {
+         flex-direction: column;
+         padding-top: 6.5rem;
+      }
+      .admin-sidebar {
+         width: 100%;
+      }
+      .admin-nav-list {
+         flex-direction: row;
+         flex-wrap: wrap;
+      }
+      .admin-nav-link {
+         flex: 1 1 140px;
+         justify-content: center;
+         font-size: 0.85rem;
+         padding: 0.5rem;
+      }
+   }
+</style>
+
+<div class="admin-container">
+   <!-- Sidebar Partial -->
+   <%- include('partials/sidebar', { activePage: 'categories' }) %>
+
+   <!-- Main content -->
+   <main class="admin-content">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+         <h2 class="home__title" style="font-family: var(--second-font); margin: 0;">Quản Lý Danh Mục</h2>
+         <button onclick="alert('Thêm danh mục mới')" class="btn-buy" style="border: none; border-radius: 0.5rem; cursor: pointer; padding: 0.6rem 1.2rem; font-size: 0.9rem;">
+            + Thêm danh mục
+         </button>
+      </div>
+
+      <div style="background: #fff; border-radius: 1rem; padding: 2rem; box-shadow: 0 10px 20px rgba(0,0,0,0.05); overflow-x: auto;">
+         <table style="width: 100%; border-collapse: collapse; text-align: left; min-width: 600px;">
+            <thead>
+               <tr style="border-bottom: 2px solid #eee;">
+                  <th style="padding: 1rem 0.5rem; color: var(--title-color); width: 70%;">Tên danh mục</th>
+                  <th style="padding: 1rem 0.5rem; color: var(--title-color);">Thao tác</th>
+               </tr>
+            </thead>
+            <tbody>
+               <% categories.forEach(category => { %>
+                  <tr style="border-bottom: 1px solid #eee;">
+                     <td style="padding: 1rem 0.5rem; font-weight: 500;"><%= category %></td>
+                     <td style="padding: 1rem 0.5rem;">
+                        <button style="background: none; border: none; color: #2980b9; cursor: pointer; font-weight: 600; margin-right: 1rem;">Sửa</button>
+                        <button style="background: none; border: none; color: #c0392b; cursor: pointer; font-weight: 600;">Xóa</button>
+                     </td>
+                  </tr>
+               <% }) %>
+            </tbody>
+         </table>
+      </div>
+   </main>
+</div>
+
+<%- include('../partials/footer') %>
+<%- include('../partials/scripts') %>
