@@ -687,25 +687,112 @@ app.post("/admin/orders/status/:id", isAdmin, async (req, res) => {
   res.redirect("/admin/orders");
 });
 
+function toDateStr(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${dd}`;
+}
+
+async function buildReportData(fromStr, toStr) {
+  const dateFrom = new Date(fromStr + 'T00:00:00');
+  const dateTo   = new Date(toStr   + 'T23:59:59');
+
+  const today = new Date();
+  const dayNames = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
+  const weeklyData = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    const start = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0);
+    const end   = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59);
+    const result = await Order.aggregate([
+      { $match: { status: { $ne: "Đã hủy" }, createdAt: { $gte: start, $lte: end } } },
+      { $group: { _id: null, total: { $sum: "$total" } } }
+    ]);
+    weeklyData.push({ day: dayNames[d.getDay()], revenue: result.length ? result[0].total : 0 });
+  }
+
+  const [summaryRes, dailyRes, topRes] = await Promise.all([
+    Order.aggregate([
+      { $match: { status: { $ne: "Đã hủy" }, createdAt: { $gte: dateFrom, $lte: dateTo } } },
+      { $group: { _id: null, totalRevenue: { $sum: "$total" }, orderCount: { $sum: 1 },
+          totalItemsSold: { $sum: { $sum: "$items.quantity" } } } }
+    ]),
+    Order.aggregate([
+      { $match: { status: { $ne: "Đã hủy" }, createdAt: { $gte: dateFrom, $lte: dateTo } } },
+      { $group: { _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+          revenue: { $sum: "$total" }, count: { $sum: 1 } } },
+      { $sort: { _id: 1 } }
+    ]),
+    Order.aggregate([
+      { $match: { status: { $ne: "Đã hủy" }, createdAt: { $gte: dateFrom, $lte: dateTo } } },
+      { $unwind: "$items" },
+      { $group: { _id: "$items.productId", name: { $first: "$items.name" },
+          totalQty: { $sum: "$items.quantity" },
+          totalRevenue: { $sum: { $multiply: ["$items.price", "$items.quantity"] } } } },
+      { $sort: { totalQty: -1 } }, { $limit: 10 }
+    ]),
+  ]);
+
+  const rawSummary = summaryRes[0] || { totalRevenue: 0, orderCount: 0, totalItemsSold: 0 };
+  const summary = {
+    totalRevenue: rawSummary.totalRevenue,
+    orderCount: rawSummary.orderCount,
+    totalItemsSold: rawSummary.totalItemsSold,
+    avgOrderValue: rawSummary.orderCount > 0 ? Math.round(rawSummary.totalRevenue / rawSummary.orderCount) : 0,
+  };
+
+  const dailyRevenue = dailyRes.map(d => ({ date: d._id, revenue: d.revenue, count: d.count }));
+
+  const totalRev = summary.totalRevenue || 1;
+  const topProducts = topRes.map(p => ({ ...p, pct: Math.round(p.totalRevenue / totalRev * 100) }));
+
+  const lowStock = await Product.find({ stock: { $lt: 10 } }).sort({ stock: 1 }).lean();
+
+  return { weeklyData, summary, dailyRevenue, topProducts, lowStock, dateFrom, dateTo };
+}
+
 app.get("/admin/reports", isAdmin, async (req, res) => {
   try {
     const today = new Date();
-    const dayNames = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
-    const weeklyData = [];
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date(today);
-      d.setDate(d.getDate() - i);
-      const start = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0);
-      const end   = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59);
-      const result = await Order.aggregate([
-        { $match: { status: { $ne: "Đã hủy" }, createdAt: { $gte: start, $lte: end } } },
-        { $group: { _id: null, total: { $sum: "$total" } } }
-      ]);
-      weeklyData.push({ day: dayNames[d.getDay()], revenue: result.length ? result[0].total : 0 });
-    }
-    res.render("admin/reports", { weeklyData });
-  } catch {
-    res.render("admin/reports", { weeklyData: [] });
+    const defaultFrom = new Date(today.getFullYear(), today.getMonth(), 1);
+    const fromStr = req.query.from || toDateStr(defaultFrom);
+    const toStr   = req.query.to   || toDateStr(today);
+    const data = await buildReportData(fromStr, toStr);
+    res.render("admin/reports", { ...data, fromStr, toStr });
+  } catch (err) {
+    console.error("[admin/reports]", err);
+    res.render("admin/reports", {
+      weeklyData: [], summary: { totalRevenue: 0, orderCount: 0, avgOrderValue: 0, totalItemsSold: 0 },
+      dailyRevenue: [], topProducts: [], lowStock: [], fromStr: '', toStr: ''
+    });
+  }
+});
+
+app.get("/admin/reports/export", isAdmin, async (req, res) => {
+  try {
+    const { generateReport } = require('./services/excelReport');
+    const today = new Date();
+    const defaultFrom = new Date(today.getFullYear(), today.getMonth(), 1);
+    const fromStr = req.query.from || toDateStr(defaultFrom);
+    const toStr   = req.query.to   || toDateStr(today);
+    const data = await buildReportData(fromStr, toStr);
+
+    const dateFrom = new Date(fromStr + 'T00:00:00');
+    const dateTo   = new Date(toStr   + 'T23:59:59');
+    const orders = await Order.find({ createdAt: { $gte: dateFrom, $lte: dateTo } })
+      .sort({ createdAt: -1 }).lean();
+
+    const wb = await generateReport({ ...data, fromStr, toStr, orders });
+    const filename = `BaoCao_WildCamp_${fromStr}_${toStr}.xlsx`;
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    await wb.xlsx.write(res);
+    res.end();
+  } catch (err) {
+    console.error("[admin/reports/export]", err);
+    res.status(500).send('Lỗi xuất báo cáo: ' + err.message);
   }
 });
 

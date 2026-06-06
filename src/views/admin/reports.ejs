@@ -8,11 +8,82 @@
   .admin-nav-link:hover { background:rgba(140,200,150,0.1); color:var(--first-color); }
   .admin-nav-link.active { background:var(--gradient-color); color:#fff; }
   .admin-content { flex-grow:1; min-width:0; }
-  @media screen and (max-width:768px) {
+
+  /* Cards */
+  .rp-card { background:#fff; border-radius:1rem; padding:1.75rem 2rem; box-shadow:0 10px 20px rgba(0,0,0,0.05); }
+  .rp-section-title { font-family:var(--second-font); font-size:1.1rem; color:var(--title-color); margin-bottom:1.25rem; display:flex; align-items:center; gap:0.6rem; }
+
+  /* KPI strip */
+  .kpi-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; margin-bottom:1.5rem; }
+  .kpi-card { background:#fff; border-radius:1rem; padding:1.25rem 1.5rem; box-shadow:0 6px 16px rgba(0,0,0,0.07); display:flex; flex-direction:column; gap:0.35rem; border-top:4px solid; }
+  .kpi-card.green  { border-color:#2D6A4F; }
+  .kpi-card.teal   { border-color:#40916C; }
+  .kpi-card.blue   { border-color:#1F618D; }
+  .kpi-card.orange { border-color:#CA6F1E; }
+  .kpi-label { font-size:0.78rem; color:#888; font-weight:500; text-transform:uppercase; letter-spacing:0.04em; }
+  .kpi-value { font-size:1.45rem; font-weight:700; color:var(--title-color); line-height:1.1; }
+  .kpi-sub   { font-size:0.76rem; color:#aaa; }
+
+  /* Date range bar */
+  .range-bar { background:#fff; border-radius:1rem; padding:1.2rem 1.75rem; box-shadow:0 6px 16px rgba(0,0,0,0.06); display:flex; align-items:center; gap:1rem; flex-wrap:wrap; margin-bottom:1.5rem; }
+  .range-bar label { font-size:0.85rem; font-weight:600; color:var(--title-color); white-space:nowrap; }
+  .range-bar input[type=date] { border:1.5px solid #ddd; border-radius:0.5rem; padding:0.45rem 0.75rem; font-size:0.88rem; outline:none; color:var(--text-color); }
+  .range-bar input[type=date]:focus { border-color:var(--first-color); }
+  .range-bar .btn-apply { background:var(--gradient-color); color:#fff; border:none; border-radius:0.5rem; padding:0.5rem 1.25rem; font-size:0.88rem; font-weight:600; cursor:pointer; white-space:nowrap; }
+  .range-bar .btn-export { background:#fff; color:#2D6A4F; border:1.5px solid #2D6A4F; border-radius:0.5rem; padding:0.5rem 1.25rem; font-size:0.88rem; font-weight:600; cursor:pointer; white-space:nowrap; display:flex; align-items:center; gap:0.4rem; text-decoration:none; }
+  .range-bar .btn-export:hover { background:#2D6A4F; color:#fff; }
+  .range-bar .sep { flex:1; }
+
+  /* Chart */
+  .bar-chart-wrap { display:flex; align-items:flex-end; justify-content:space-around; height:180px; border-left:2px solid #e0e0e0; border-bottom:2px solid #e0e0e0; padding:0.75rem 0.25rem 0; gap:0.3rem; }
+  .bar-col { display:flex; flex-direction:column; align-items:center; flex:1; gap:0.3rem; }
+  .bar-lbl { font-size:0.7rem; color:var(--first-color); font-weight:600; text-align:center; min-height:14px; }
+  .bar-rect { background:var(--gradient-color); width:100%; border-radius:0.2rem 0.2rem 0 0; }
+  .bar-day { font-size:0.75rem; margin-top:0.2rem; color:#666; }
+
+  /* Two-col layout */
+  .two-col { display:grid; grid-template-columns:1fr 1fr; gap:1.25rem; margin-bottom:1.5rem; }
+
+  /* Tables */
+  .rp-table { width:100%; border-collapse:collapse; font-size:0.875rem; }
+  .rp-table th { background:#1B4332; color:#fff; padding:0.7rem 1rem; text-align:left; font-weight:600; font-size:0.8rem; }
+  .rp-table th:first-child { border-radius:0.5rem 0 0 0; }
+  .rp-table th:last-child  { border-radius:0 0.5rem 0 0; }
+  .rp-table td { padding:0.65rem 1rem; border-bottom:1px solid #f0f0f0; color:var(--text-color); }
+  .rp-table tr:last-child td { border-bottom:none; }
+  .rp-table tr:nth-child(even) td { background:#F9FDF9; }
+  .rp-table tr:hover td { background:#F0FAF4; }
+  .rp-table td.num { text-align:right; font-weight:600; }
+  .rp-table td.center { text-align:center; }
+
+  /* Mini progress bar */
+  .mini-bar-wrap { display:flex; align-items:center; gap:0.5rem; }
+  .mini-bar-bg { flex:1; height:6px; background:#e8f5e9; border-radius:3px; overflow:hidden; }
+  .mini-bar-fill { height:100%; background:var(--gradient-color); border-radius:3px; }
+  .mini-pct { font-size:0.75rem; font-weight:600; color:#2D6A4F; min-width:30px; }
+
+  /* Stock badges */
+  .stock-badge { display:inline-block; padding:0.2rem 0.65rem; border-radius:99px; font-size:0.75rem; font-weight:700; }
+  .badge-red    { background:#FADBD8; color:#922B21; }
+  .badge-orange { background:#FDEBD0; color:#784212; }
+  .badge-yellow { background:#FFF3CD; color:#856404; }
+
+  /* Empty state */
+  .empty-row td { text-align:center; color:#aaa; padding:2rem; font-size:0.9rem; }
+
+  /* Daily table scroll */
+  .daily-scroll { max-height:260px; overflow-y:auto; }
+
+  @media screen and (max-width:900px) {
+    .kpi-grid { grid-template-columns:repeat(2,1fr); }
+    .two-col  { grid-template-columns:1fr; }
+  }
+  @media screen and (max-width:600px) {
     .admin-container { flex-direction:column; padding-top:6.5rem; }
     .admin-sidebar { width:100%; }
     .admin-nav-list { flex-direction:row; flex-wrap:wrap; }
     .admin-nav-link { flex:1 1 140px; justify-content:center; font-size:0.85rem; padding:0.5rem; }
+    .kpi-grid { grid-template-columns:1fr 1fr; }
   }
 </style>
 
@@ -20,33 +91,194 @@
   <%- include('partials/sidebar', { activePage: 'reports' }) %>
 
   <main class="admin-content">
-    <h2 class="home__title" style="font-family:var(--second-font);margin-bottom:2rem;">Thống Kê Báo Cáo</h2>
+    <h2 class="home__title" style="font-family:var(--second-font);margin-bottom:1.5rem;">
+      <i class="ri-bar-chart-2-line"></i> Thống Kê Báo Cáo
+    </h2>
 
-    <div style="background:#fff;border-radius:1rem;padding:2.5rem 2rem;box-shadow:0 10px 20px rgba(0,0,0,0.05);">
-      <h3 style="color:var(--title-color);margin-bottom:0.5rem;">Doanh thu 7 ngày gần đây</h3>
-      <p style="font-size:0.85rem;opacity:0.6;margin-bottom:2rem;">
-        Tổng: <strong><%= weeklyData.reduce((s,d) => s + d.revenue, 0).toLocaleString('vi-VN') %>đ</strong>
-      </p>
+    <!-- Date range picker -->
+    <form class="range-bar" method="GET" action="/admin/reports">
+      <label>Từ ngày</label>
+      <input type="date" name="from" value="<%= fromStr %>" max="<%= toStr %>">
+      <label>Đến ngày</label>
+      <input type="date" name="to" value="<%= toStr %>" min="<%= fromStr %>">
+      <button type="submit" class="btn-apply">
+        <i class="ri-search-line"></i> Xem báo cáo
+      </button>
+      <span class="sep"></span>
+      <a class="btn-export" href="/admin/reports/export?from=<%= fromStr %>&to=<%= toStr %>">
+        <i class="ri-file-excel-2-line"></i> Xuất Excel
+      </a>
+    </form>
 
-      <% const maxRevenue = Math.max(...weeklyData.map(d => d.revenue), 1); %>
-      <div style="display:flex;align-items:flex-end;justify-content:space-around;height:200px;border-left:2px solid #ddd;border-bottom:2px solid #ddd;padding:1rem 0.5rem 0;gap:0.5rem;">
-        <% weeklyData.forEach(day => { %>
-          <% const barHeight = Math.max(4, Math.round((day.revenue / maxRevenue) * 170)); %>
-          <div style="display:flex;flex-direction:column;align-items:center;flex:1;gap:0.4rem;">
-            <div style="font-size:0.72rem;color:var(--first-color);font-weight:600;text-align:center;">
-              <% if (day.revenue > 0) { %><%= Math.round(day.revenue/1000) %>k<% } %>
+    <!-- KPI cards -->
+    <%
+      var totalRev = summary.totalRevenue || 0;
+      var orderCnt = summary.orderCount || 0;
+      var avgVal   = summary.avgOrderValue || 0;
+      var itemsSold = summary.totalItemsSold || 0;
+    %>
+    <div class="kpi-grid">
+      <div class="kpi-card green">
+        <span class="kpi-label"><i class="ri-money-dollar-circle-line"></i> Doanh thu</span>
+        <span class="kpi-value"><%= Math.round(totalRev/1000).toLocaleString('vi-VN') %>k đ</span>
+        <span class="kpi-sub"><%= totalRev.toLocaleString('vi-VN') %> VNĐ</span>
+      </div>
+      <div class="kpi-card teal">
+        <span class="kpi-label"><i class="ri-shopping-bag-3-line"></i> Đơn hàng</span>
+        <span class="kpi-value"><%= orderCnt.toLocaleString('vi-VN') %></span>
+        <span class="kpi-sub">đơn hàng thành công</span>
+      </div>
+      <div class="kpi-card blue">
+        <span class="kpi-label"><i class="ri-funds-line"></i> Trung bình / đơn</span>
+        <span class="kpi-value"><%= Math.round(avgVal/1000).toLocaleString('vi-VN') %>k đ</span>
+        <span class="kpi-sub"><%= avgVal.toLocaleString('vi-VN') %> VNĐ</span>
+      </div>
+      <div class="kpi-card orange">
+        <span class="kpi-label"><i class="ri-box-3-line"></i> Sản phẩm đã bán</span>
+        <span class="kpi-value"><%= itemsSold.toLocaleString('vi-VN') %></span>
+        <span class="kpi-sub">trong kỳ báo cáo</span>
+      </div>
+    </div>
+
+    <!-- Charts row -->
+    <div class="two-col">
+      <!-- Weekly bar chart -->
+      <div class="rp-card">
+        <div class="rp-section-title"><i class="ri-bar-chart-grouped-line"></i> Doanh thu 7 ngày gần đây</div>
+        <% var maxW = Math.max.apply(null, weeklyData.map(function(d){ return d.revenue; }).concat([1])); %>
+        <div class="bar-chart-wrap">
+          <% weeklyData.forEach(function(day) { %>
+            <% var h = Math.max(4, Math.round((day.revenue / maxW) * 150)); %>
+            <div class="bar-col">
+              <span class="bar-lbl"><%= day.revenue > 0 ? Math.round(day.revenue/1000) + 'k' : '' %></span>
+              <div class="bar-rect" style="height:<%= h %>px;" title="<%= day.revenue.toLocaleString('vi-VN') %>đ"></div>
+              <span class="bar-day"><%= day.day %></span>
             </div>
-            <div title="<%= day.revenue.toLocaleString('vi-VN') %>đ"
-              style="background:var(--gradient-color);width:100%;height:<%= barHeight %>px;border-radius:0.25rem 0.25rem 0 0;transition:height 0.3s;"></div>
-            <span style="font-size:0.78rem;margin-top:0.25rem;"><%= day.day %></span>
-          </div>
-        <% }) %>
+          <% }); %>
+        </div>
+        <% if (weeklyData.every(function(d){ return d.revenue === 0; })) { %>
+          <p style="text-align:center;color:#aaa;margin-top:1rem;font-size:0.85rem;">Chưa có dữ liệu</p>
+        <% } %>
       </div>
 
-      <% if (weeklyData.every(d => d.revenue === 0)) { %>
-        <p style="text-align:center;opacity:0.5;margin-top:1rem;font-size:0.9rem;">Chưa có dữ liệu doanh thu trong 7 ngày qua</p>
+      <!-- Daily revenue table for selected period -->
+      <div class="rp-card">
+        <div class="rp-section-title"><i class="ri-calendar-check-line"></i> Doanh thu theo ngày</div>
+        <% if (dailyRevenue.length === 0) { %>
+          <p style="text-align:center;color:#aaa;padding:2rem 0;font-size:0.88rem;">Không có đơn hàng trong kỳ đã chọn</p>
+        <% } else { %>
+          <div class="daily-scroll">
+            <table class="rp-table">
+              <thead>
+                <tr>
+                  <th>Ngày</th>
+                  <th style="text-align:center;">Đơn</th>
+                  <th style="text-align:right;">Doanh thu</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% dailyRevenue.forEach(function(d) { %>
+                  <tr>
+                    <td><%= new Date(d.date).toLocaleDateString('vi-VN') %></td>
+                    <td class="center"><%= d.count %></td>
+                    <td class="num"><%= d.revenue.toLocaleString('vi-VN') %>đ</td>
+                  </tr>
+                <% }); %>
+              </tbody>
+            </table>
+          </div>
+        <% } %>
+      </div>
+    </div>
+
+    <!-- Top products -->
+    <div class="rp-card" style="margin-bottom:1.25rem;">
+      <div class="rp-section-title"><i class="ri-trophy-line"></i> Sản phẩm bán chạy & Doanh thu theo sản phẩm</div>
+      <% if (topProducts.length === 0) { %>
+        <p style="text-align:center;color:#aaa;padding:2rem 0;font-size:0.88rem;">Không có dữ liệu bán hàng trong kỳ đã chọn</p>
+      <% } else { %>
+        <table class="rp-table">
+          <thead>
+            <tr>
+              <th style="width:50px;text-align:center;">#</th>
+              <th>Sản phẩm</th>
+              <th style="text-align:center;width:110px;">SL bán</th>
+              <th style="text-align:right;width:160px;">Doanh thu</th>
+              <th style="width:160px;">% Tổng DT</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% topProducts.forEach(function(p, i) { %>
+              <tr>
+                <td class="center" style="font-weight:700;color:<%= i===0?'#B7770D':i===1?'#909090':i===2?'#A0522D':'#aaa' %>;">
+                  <%= i+1 %>
+                </td>
+                <td style="font-weight:500;"><%= p.name %></td>
+                <td class="center" style="font-weight:600;"><%= p.totalQty %></td>
+                <td class="num"><%= p.totalRevenue.toLocaleString('vi-VN') %>đ</td>
+                <td>
+                  <div class="mini-bar-wrap">
+                    <div class="mini-bar-bg"><div class="mini-bar-fill" style="width:<%= p.pct %>%;"></div></div>
+                    <span class="mini-pct"><%= p.pct %>%</span>
+                  </div>
+                </td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
       <% } %>
     </div>
+
+    <!-- Low stock alerts -->
+    <div class="rp-card">
+      <div class="rp-section-title">
+        <i class="ri-alarm-warning-line" style="color:#C0392B;"></i>
+        Cảnh báo tồn kho thấp
+        <% if (lowStock.length > 0) { %>
+          <span style="background:#FADBD8;color:#922B21;font-size:0.75rem;font-weight:700;padding:0.15rem 0.6rem;border-radius:99px;"><%= lowStock.length %> sản phẩm</span>
+        <% } %>
+      </div>
+      <% if (lowStock.length === 0) { %>
+        <div style="text-align:center;padding:2rem 0;color:#2D6A4F;">
+          <i class="ri-checkbox-circle-line" style="font-size:2rem;"></i>
+          <p style="margin-top:0.5rem;font-size:0.9rem;">Tất cả sản phẩm đều còn đủ hàng</p>
+        </div>
+      <% } else { %>
+        <table class="rp-table">
+          <thead>
+            <tr>
+              <th style="width:50px;text-align:center;">STT</th>
+              <th>Sản phẩm</th>
+              <th>Danh mục</th>
+              <th style="text-align:center;width:100px;">Tồn kho</th>
+              <th style="width:160px;">Mức độ</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% lowStock.forEach(function(p, i) { %>
+              <%
+                var bgRow = p.stock === 0 ? 'background:#FEF9F9;' : p.stock <= 3 ? 'background:#FFFBF5;' : '';
+                var badge = p.stock === 0
+                  ? '<span class="stock-badge badge-red">Hết hàng</span>'
+                  : p.stock <= 3
+                    ? '<span class="stock-badge badge-orange">Nguy hiểm</span>'
+                    : '<span class="stock-badge badge-yellow">Cần nhập thêm</span>';
+              %>
+              <tr style="<%= bgRow %>">
+                <td class="center"><%= i+1 %></td>
+                <td style="font-weight:500;"><%= p.name %></td>
+                <td><%= p.category %></td>
+                <td class="center" style="font-weight:700;color:<%= p.stock===0?'#922B21':p.stock<=3?'#784212':'#856404' %>;">
+                  <%= p.stock %>
+                </td>
+                <td><%- badge %></td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      <% } %>
+    </div>
+
   </main>
 </div>
 
