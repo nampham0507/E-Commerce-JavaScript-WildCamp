@@ -1,9 +1,16 @@
 const User = require('../models/User');
 
+const PAGE_SIZE = 10;
+
 exports.getUsers = async (req, res) => {
     try {
-        const users = await User.find({});
-        res.render('admin/users', { users });
+        const currentPage = Math.max(1, parseInt(req.query.page) || 1);
+        const [users, totalItems] = await Promise.all([
+            User.find({}).sort({ createdAt: -1 }).skip((currentPage - 1) * PAGE_SIZE).limit(PAGE_SIZE),
+            User.countDocuments()
+        ]);
+        const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
+        res.render('admin/users', { users, currentPage, totalPages, totalItems });
     } catch (error) {
         res.status(500).send('Lỗi máy chủ');
     }
@@ -47,7 +54,6 @@ exports.editUser = async (req, res) => {
         user.role  = role;
         await user.save();
 
-        // If the admin edited their own details, refresh the session copy
         if (req.session.user && req.session.user.id === id) {
             req.session.user.name = name;
             req.session.user.email = email;
@@ -66,7 +72,6 @@ exports.deleteUser = async (req, res) => {
     try {
         const { id } = req.params;
 
-        // Prevent self deletion
         if (req.session.user && req.session.user.id === id) {
             req.flash('error', 'Bạn không thể tự xóa chính mình.');
             return res.redirect('/admin/users');

@@ -14,6 +14,52 @@
     .admin-nav-list { flex-direction:row; flex-wrap:wrap; }
     .admin-nav-link { flex:1 1 140px; justify-content:center; font-size:0.85rem; padding:0.5rem; }
   }
+
+  /* ── Order detail modal ── */
+  .order-modal-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+    z-index: 1000; align-items: center; justify-content: center; padding: 1rem;
+  }
+  .order-modal-overlay.open { display: flex; }
+  .order-modal {
+    background: #fff; border-radius: 1rem; padding: 2rem; max-width: 600px; width: 100%;
+    max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+    position: relative; animation: modalIn 0.2s ease;
+  }
+  @keyframes modalIn {
+    from { opacity:0; transform: translateY(-16px); }
+    to   { opacity:1; transform: translateY(0); }
+  }
+  .order-modal__close {
+    position: absolute; top: 1rem; right: 1.25rem; background: none; border: none;
+    font-size: 1.4rem; cursor: pointer; color: #888; line-height: 1;
+  }
+  .order-modal__close:hover { color: #333; }
+  .order-modal__section { margin-bottom: 1.5rem; }
+  .order-modal__section-title {
+    font-size: 0.75rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.08em; color: #999; margin-bottom: 0.75rem; padding-bottom: 0.4rem;
+    border-bottom: 1px solid #eee;
+  }
+  .order-modal__row {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    margin-bottom: 0.5rem; font-size: 0.9rem; gap: 1rem;
+  }
+  .order-modal__label { color: #777; flex-shrink: 0; }
+  .order-modal__value { font-weight: 600; color: var(--title-color); text-align: right; }
+  .order-modal__item {
+    display: flex; align-items: center; gap: 0.75rem;
+    padding: 0.6rem 0; border-bottom: 1px solid #f5f5f5;
+  }
+  .order-modal__item:last-child { border-bottom: none; }
+  .order-modal__item img { width: 44px; height: 44px; object-fit: contain; border-radius: 0.35rem; background: #f9f9f9; }
+  .order-modal__item-name { font-size: 0.88rem; font-weight: 600; color: var(--title-color); }
+  .order-modal__item-sub { font-size: 0.8rem; color: #999; }
+  .order-modal__item-price { margin-left: auto; font-weight: 700; color: var(--first-color); font-size: 0.9rem; white-space: nowrap; }
+  .order-modal__total-row {
+    display: flex; justify-content: space-between; font-size: 0.88rem; margin-bottom: 0.35rem; opacity: 0.75;
+  }
+  .order-modal__grand { display: flex; justify-content: space-between; font-weight: 700; font-size: 1.05rem; border-top: 1px solid #eee; padding-top: 0.75rem; margin-top: 0.25rem; }
 </style>
 
 <div class="admin-container">
@@ -23,7 +69,7 @@
     <h2 class="home__title" style="font-family:var(--second-font);margin-bottom:2rem;">Quản Lý Đơn Hàng</h2>
 
     <div style="background:#fff;border-radius:1rem;padding:2rem;box-shadow:0 10px 20px rgba(0,0,0,0.05);overflow-x:auto;">
-      <table style="width:100%;border-collapse:collapse;text-align:left;min-width:640px;">
+      <table style="width:100%;border-collapse:collapse;text-align:left;min-width:700px;">
         <thead>
           <tr style="border-bottom:2px solid #eee;">
             <th style="padding:1rem 0.5rem;color:var(--title-color);">Mã đơn</th>
@@ -32,13 +78,21 @@
             <th style="padding:1rem 0.5rem;color:var(--title-color);">Tổng tiền</th>
             <th style="padding:1rem 0.5rem;color:var(--title-color);">Trạng thái</th>
             <th style="padding:1rem 0.5rem;color:var(--title-color);">Cập nhật</th>
+            <th style="padding:1rem 0.5rem;color:var(--title-color);"></th>
           </tr>
         </thead>
         <tbody>
           <% if (orders.length === 0) { %>
-            <tr><td colspan="6" style="padding:2rem;text-align:center;opacity:0.5;">Chưa có đơn hàng nào</td></tr>
+            <tr><td colspan="7" style="padding:2rem;text-align:center;opacity:0.5;">Chưa có đơn hàng nào</td></tr>
           <% } %>
           <% orders.forEach(order => { %>
+            <%
+              var _ss = order.status === 'Đã hoàn thành' ? 'background:#d4efdf;color:#196f3d;'
+                      : order.status === 'Đã xác nhận'  ? 'background:#d6eaf8;color:#1f618d;'
+                      : order.status === 'Đang giao'    ? 'background:#fdebd0;color:#784212;'
+                      : order.status === 'Đã hủy'       ? 'background:#fadbd8;color:#78281f;'
+                      : 'background:#fcf3cf;color:#7e5109;';
+            %>
             <tr style="border-bottom:1px solid #eee;">
               <td style="padding:1rem 0.5rem;font-weight:700;color:var(--title-color);font-size:0.85rem;"><%= order.orderCode %></td>
               <td style="padding:1rem 0.5rem;">
@@ -48,11 +102,7 @@
               <td style="padding:1rem 0.5rem;opacity:0.8;font-size:0.88rem;"><%= new Date(order.createdAt).toLocaleDateString('vi-VN') %></td>
               <td style="padding:1rem 0.5rem;color:var(--first-color);font-weight:700;"><%= order.total.toLocaleString('vi-VN') %>đ</td>
               <td style="padding:1rem 0.5rem;">
-                <% var _statusStyle = order.status === 'Đã hoàn thành' ? 'background:#d4efdf;color:#196f3d;'
-                     : order.status === 'Đã xác nhận' ? 'background:#d6eaf8;color:#1f618d;'
-                     : order.status === 'Đã hủy' ? 'background:#fadbd8;color:#78281f;'
-                     : 'background:#fcf3cf;color:#7e5109;'; %>
-                <span style="display:inline-block;padding:0.25rem 0.75rem;border-radius:1rem;font-size:0.8rem;font-weight:600;<%= _statusStyle %>">
+                <span style="display:inline-block;padding:0.25rem 0.75rem;border-radius:1rem;font-size:0.8rem;font-weight:600;<%= _ss %>">
                   <%= order.status %>
                 </span>
               </td>
@@ -61,19 +111,179 @@
                   <select name="status" style="padding:0.3rem 0.5rem;border:1px solid #ddd;border-radius:0.4rem;font-size:0.82rem;">
                     <option value="Chờ xác nhận"  <%= order.status === 'Chờ xác nhận'  ? 'selected' : '' %>>Chờ xác nhận</option>
                     <option value="Đã xác nhận"   <%= order.status === 'Đã xác nhận'   ? 'selected' : '' %>>Đã xác nhận</option>
+                    <option value="Đang giao"      <%= order.status === 'Đang giao'     ? 'selected' : '' %>>Đang giao</option>
                     <option value="Đã hoàn thành" <%= order.status === 'Đã hoàn thành' ? 'selected' : '' %>>Đã hoàn thành</option>
                     <option value="Đã hủy"        <%= order.status === 'Đã hủy'        ? 'selected' : '' %>>Đã hủy</option>
                   </select>
                   <button type="submit" style="padding:0.3rem 0.6rem;background:var(--gradient-color);color:#fff;border:none;border-radius:0.4rem;cursor:pointer;font-size:0.8rem;">Lưu</button>
                 </form>
               </td>
+              <td style="padding:1rem 0.5rem;">
+                <button
+                  onclick="openOrderModal(this)"
+                  data-id="<%= order._id %>"
+                  data-code="<%= order.orderCode %>"
+                  data-name="<%= order.customer.name %>"
+                  data-phone="<%= order.customer.phone %>"
+                  data-address="<%= order.customer.address %>"
+                  data-note="<%= order.note || '' %>"
+                  data-method="<%= order.paymentMethod %>"
+                  data-payment="<%= order.paymentStatus %>"
+                  data-status="<%= order.status %>"
+                  data-total="<%= order.total %>"
+                  data-subtotal="<%= order.total - 30000 %>"
+                  data-items='<%- JSON.stringify(order.items.map(i => ({ name: i.name, price: i.price, image: i.image || "", quantity: i.quantity }))) %>'
+                  data-date="<%= new Date(order.createdAt).toLocaleString('vi-VN') %>"
+                  style="padding:0.3rem 0.75rem;background:#f0f0f0;border:none;border-radius:0.4rem;cursor:pointer;font-size:0.82rem;color:var(--title-color);white-space:nowrap;"
+                >
+                  Chi tiết
+                </button>
+              </td>
             </tr>
           <% }) %>
         </tbody>
       </table>
+      <%- include('partials/pagination') %>
     </div>
   </main>
 </div>
+
+<!-- ── Order Detail Modal ── -->
+<div class="order-modal-overlay" id="orderModalOverlay" onclick="closeOrderModal(event)">
+  <div class="order-modal" id="orderModal">
+    <button class="order-modal__close" onclick="closeOrderModal(null)">✕</button>
+
+    <h3 id="modalTitle" style="font-family:var(--second-font);color:var(--title-color);margin-bottom:1.5rem;padding-right:2rem;"></h3>
+
+    <!-- Customer info -->
+    <div class="order-modal__section">
+      <div class="order-modal__section-title">Thông tin khách hàng</div>
+      <div class="order-modal__row">
+        <span class="order-modal__label">Họ tên</span>
+        <span class="order-modal__value" id="mName"></span>
+      </div>
+      <div class="order-modal__row">
+        <span class="order-modal__label">Số điện thoại</span>
+        <span class="order-modal__value" id="mPhone"></span>
+      </div>
+      <div class="order-modal__row">
+        <span class="order-modal__label">Địa chỉ</span>
+        <span class="order-modal__value" id="mAddress" style="max-width:60%;"></span>
+      </div>
+      <div class="order-modal__row" id="mNoteRow">
+        <span class="order-modal__label">Ghi chú</span>
+        <span class="order-modal__value" id="mNote" style="max-width:60%;font-weight:400;font-style:italic;color:#666;"></span>
+      </div>
+    </div>
+
+    <!-- Payment info -->
+    <div class="order-modal__section">
+      <div class="order-modal__section-title">Thanh toán & trạng thái</div>
+      <div class="order-modal__row">
+        <span class="order-modal__label">Phương thức</span>
+        <span class="order-modal__value" id="mMethod"></span>
+      </div>
+      <div class="order-modal__row">
+        <span class="order-modal__label">Trạng thái TT</span>
+        <span class="order-modal__value" id="mPayStatus"></span>
+      </div>
+      <div class="order-modal__row">
+        <span class="order-modal__label">Trạng thái đơn</span>
+        <span class="order-modal__value" id="mStatus"></span>
+      </div>
+      <div class="order-modal__row">
+        <span class="order-modal__label">Ngày đặt</span>
+        <span class="order-modal__value" id="mDate"></span>
+      </div>
+    </div>
+
+    <!-- Items -->
+    <div class="order-modal__section">
+      <div class="order-modal__section-title">Sản phẩm</div>
+      <div id="mItems"></div>
+    </div>
+
+    <!-- Totals -->
+    <div class="order-modal__section" style="margin-bottom:0;">
+      <div class="order-modal__total-row">
+        <span>Tạm tính</span><span id="mSubtotal"></span>
+      </div>
+      <div class="order-modal__total-row">
+        <span>Phí vận chuyển</span><span>30.000đ</span>
+      </div>
+      <div class="order-modal__grand">
+        <span>Tổng cộng</span>
+        <span style="color:var(--first-color);" id="mTotal"></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  const statusStyle = {
+    'Đã hoàn thành': 'background:#d4efdf;color:#196f3d;',
+    'Đã xác nhận':  'background:#d6eaf8;color:#1f618d;',
+    'Đang giao':    'background:#fdebd0;color:#784212;',
+    'Đã hủy':       'background:#fadbd8;color:#78281f;',
+  };
+  const defaultStyle = 'background:#fcf3cf;color:#7e5109;';
+
+  const payLabel = { paid: 'Đã thanh toán', pending: 'Chờ thanh toán', failed: 'Thất bại', 'N/A': 'COD' };
+
+  window.openOrderModal = function (btn) {
+    const d = btn.dataset;
+    document.getElementById('modalTitle').textContent = 'Đơn hàng #' + d.code;
+    document.getElementById('mName').textContent    = d.name;
+    document.getElementById('mPhone').textContent   = d.phone;
+    document.getElementById('mAddress').textContent = d.address;
+
+    const noteRow = document.getElementById('mNoteRow');
+    if (d.note) {
+      document.getElementById('mNote').textContent = d.note;
+      noteRow.style.display = 'flex';
+    } else {
+      noteRow.style.display = 'none';
+    }
+
+    document.getElementById('mMethod').textContent    = d.method;
+    document.getElementById('mPayStatus').innerHTML   = `<span style="padding:0.15rem 0.5rem;border-radius:1rem;font-size:0.78rem;font-weight:600;${d.payment==='paid'?'background:#d4efdf;color:#196f3d;':'background:#fcf3cf;color:#7e5109;'}">${payLabel[d.payment] || d.payment}</span>`;
+    const st = d.status;
+    document.getElementById('mStatus').innerHTML      = `<span style="padding:0.15rem 0.5rem;border-radius:1rem;font-size:0.78rem;font-weight:600;${statusStyle[st]||defaultStyle}">${st}</span>`;
+    document.getElementById('mDate').textContent      = d.date;
+
+    const items = JSON.parse(d.items);
+    document.getElementById('mItems').innerHTML = items.map(i => `
+      <div class="order-modal__item">
+        ${i.image ? `<img src="${i.image}" alt="${i.name}">` : ''}
+        <div>
+          <div class="order-modal__item-name">${i.name}</div>
+          <div class="order-modal__item-sub">x${i.quantity} × ${Number(i.price).toLocaleString('vi-VN')}đ</div>
+        </div>
+        <div class="order-modal__item-price">${(i.price * i.quantity).toLocaleString('vi-VN')}đ</div>
+      </div>
+    `).join('');
+
+    const total    = Number(d.total);
+    const subtotal = Number(d.subtotal);
+    document.getElementById('mSubtotal').textContent = subtotal.toLocaleString('vi-VN') + 'đ';
+    document.getElementById('mTotal').textContent    = total.toLocaleString('vi-VN') + 'đ';
+
+    document.getElementById('orderModalOverlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  };
+
+  window.closeOrderModal = function (e) {
+    if (e && e.target !== document.getElementById('orderModalOverlay')) return;
+    document.getElementById('orderModalOverlay').classList.remove('open');
+    document.body.style.overflow = '';
+  };
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeOrderModal(null);
+  });
+})();
+</script>
 
 <%- include('../partials/footer') %>
 <%- include('../partials/scripts') %>

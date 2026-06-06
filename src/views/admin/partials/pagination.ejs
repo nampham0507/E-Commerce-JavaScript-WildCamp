@@ -1,0 +1,75 @@
+<%
+  var _start = Math.min((currentPage - 1) * 10 + 1, totalItems);
+  var _end   = Math.min(currentPage * 10, totalItems);
+  var _pStart = Math.max(1, currentPage - 2);
+  var _pEnd   = Math.min(totalPages, currentPage + 2);
+%>
+<div style="display:flex;justify-content:space-between;align-items:center;margin-top:1.5rem;padding-top:1rem;border-top:1px solid #eee;flex-wrap:wrap;gap:0.75rem;">
+  <span style="font-size:0.85rem;color:#888;">
+    <% if (totalItems === 0) { %>
+      Không có dữ liệu
+    <% } else { %>
+      Hiển thị <%= _start %>–<%= _end %> trong tổng số <strong><%= totalItems %></strong> mục
+    <% } %>
+  </span>
+
+  <% if (totalPages > 1) { %>
+  <div style="display:flex;gap:0.3rem;align-items:center;">
+    <!-- Prev -->
+    <% if (currentPage > 1) { %>
+      <a href="?page=<%= currentPage - 1 %>"
+         style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border:1px solid #ddd;border-radius:0.4rem;color:var(--title-color);font-size:1rem;text-decoration:none;transition:all 0.15s;"
+         onmouseover="this.style.borderColor='var(--first-color)';this.style.color='var(--first-color)'"
+         onmouseout="this.style.borderColor='#ddd';this.style.color='var(--title-color)'">‹</a>
+    <% } else { %>
+      <span style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border:1px solid #eee;border-radius:0.4rem;color:#ccc;font-size:1rem;cursor:default;">‹</span>
+    <% } %>
+
+    <!-- First page shortcut -->
+    <% if (_pStart > 1) { %>
+      <a href="?page=1"
+         style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border:1px solid #ddd;border-radius:0.4rem;color:var(--title-color);font-size:0.85rem;text-decoration:none;">1</a>
+      <% if (_pStart > 2) { %>
+        <span style="color:#bbb;font-size:0.9rem;padding:0 0.1rem;">…</span>
+      <% } %>
+    <% } %>
+
+    <!-- Page numbers -->
+    <% for (var _pg = _pStart; _pg <= _pEnd; _pg++) { %>
+      <% if (_pg === currentPage) { %>
+        <span style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;background:var(--gradient-color);color:#fff;border-radius:0.4rem;font-size:0.85rem;font-weight:700;">
+          <%= _pg %>
+        </span>
+      <% } else { %>
+        <a href="?page=<%= _pg %>"
+           style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border:1px solid #ddd;border-radius:0.4rem;color:var(--title-color);font-size:0.85rem;text-decoration:none;transition:all 0.15s;"
+           onmouseover="this.style.borderColor='var(--first-color)';this.style.color='var(--first-color)'"
+           onmouseout="this.style.borderColor='#ddd';this.style.color='var(--title-color)'">
+          <%= _pg %>
+        </a>
+      <% } %>
+    <% } %>
+
+    <!-- Last page shortcut -->
+    <% if (_pEnd < totalPages) { %>
+      <% if (_pEnd < totalPages - 1) { %>
+        <span style="color:#bbb;font-size:0.9rem;padding:0 0.1rem;">…</span>
+      <% } %>
+      <a href="?page=<%= totalPages %>"
+         style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border:1px solid #ddd;border-radius:0.4rem;color:var(--title-color);font-size:0.85rem;text-decoration:none;">
+        <%= totalPages %>
+      </a>
+    <% } %>
+
+    <!-- Next -->
+    <% if (currentPage < totalPages) { %>
+      <a href="?page=<%= currentPage + 1 %>"
+         style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border:1px solid #ddd;border-radius:0.4rem;color:var(--title-color);font-size:1rem;text-decoration:none;transition:all 0.15s;"
+         onmouseover="this.style.borderColor='var(--first-color)';this.style.color='var(--first-color)'"
+         onmouseout="this.style.borderColor='#ddd';this.style.color='var(--title-color)'">›</a>
+    <% } else { %>
+      <span style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border:1px solid #eee;border-radius:0.4rem;color:#ccc;font-size:1rem;cursor:default;">›</span>
+    <% } %>
+  </div>
+  <% } %>
+</div>

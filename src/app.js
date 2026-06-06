@@ -368,10 +368,16 @@ app.get("/admin", isAdmin, async (req, res) => {
 
 app.get("/admin/orders", isAdmin, async (req, res) => {
   try {
-    const orders = await Order.find({}).sort({ createdAt: -1 });
-    res.render("admin/orders", { orders });
+    const PAGE_SIZE = 10;
+    const currentPage = Math.max(1, parseInt(req.query.page) || 1);
+    const [orders, totalItems] = await Promise.all([
+      Order.find({}).sort({ createdAt: -1 }).skip((currentPage - 1) * PAGE_SIZE).limit(PAGE_SIZE),
+      Order.countDocuments()
+    ]);
+    const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
+    res.render("admin/orders", { orders, currentPage, totalPages, totalItems });
   } catch {
-    res.render("admin/orders", { orders: [] });
+    res.render("admin/orders", { orders: [], currentPage: 1, totalPages: 1, totalItems: 0 });
   }
 });
 

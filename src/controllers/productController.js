@@ -15,11 +15,18 @@ function deleteUploadedFile(imagePath) {
     fs.unlink(filePath, () => {});
 }
 
+const PAGE_SIZE = 10;
+
 exports.getProducts = async (req, res) => {
     try {
-        const products = await Product.find({}).sort({ createdAt: -1 });
-        const categories = await Category.find({}).sort({ name: 1 });
-        res.render('admin/products', { products, categories });
+        const currentPage = Math.max(1, parseInt(req.query.page) || 1);
+        const [products, totalItems, categories] = await Promise.all([
+            Product.find({}).sort({ createdAt: -1 }).skip((currentPage - 1) * PAGE_SIZE).limit(PAGE_SIZE),
+            Product.countDocuments(),
+            Category.find({}).sort({ name: 1 })
+        ]);
+        const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
+        res.render('admin/products', { products, categories, currentPage, totalPages, totalItems });
     } catch (err) {
         res.status(500).send('Lỗi máy chủ');
     }
