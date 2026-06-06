@@ -1,30 +1,123 @@
-   <!--==================== FOOTER ====================-->
-   <footer style="background-color: var(--title-color); color: #fff; padding: 4rem 1.5rem 2rem; margin-top: 5rem;">
-      <div style="max-width: 1120px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 3rem;">
-         <div>
-            <h3 style="margin-bottom: 1.5rem; font-family: var(--second-font);">WildCamp</h3>
-            <p style="opacity: 0.8; font-size: 0.9rem; line-height: 1.6;">Cung cấp các sản phẩm lều cắm trại, đồ dã ngoại chất lượng cao cho chuyến hành trình hòa mình cùng thiên nhiên của bạn.</p>
-         </div>
-         <div>
-            <h4 style="margin-bottom: 1.5rem;">Danh Mục</h4>
-            <ul style="display: flex; flex-direction: column; gap: 0.75rem; opacity: 0.8; font-size: 0.9rem;">
-               <% if (typeof footerCategories !== 'undefined' && footerCategories.length > 0) { %>
-                  <% footerCategories.forEach(cat => { %>
-                     <li><a href="/?category=<%= encodeURIComponent(cat.name) %>" style="color: #fff;"><%= cat.name %></a></li>
-                  <% }) %>
-               <% } else { %>
-                  <li style="opacity:0.5;">Chưa có danh mục</li>
-               <% } %>
-            </ul>
-         </div>
-         <div>
-            <h4 style="margin-bottom: 1.5rem;">Liên Hệ</h4>
-            <p style="opacity: 0.8; font-size: 0.9rem; line-height: 1.6; margin-bottom: 0.5rem;">Địa chỉ: Rừng Quốc Gia Ba Vì, Hà Nội</p>
-            <p style="opacity: 0.8; font-size: 0.9rem; line-height: 1.6; margin-bottom: 0.5rem;">Hotline: 1900 6868</p>
-            <p style="opacity: 0.8; font-size: 0.9rem; line-height: 1.6;">Email: contact@wildcamp.vn</p>
-         </div>
+<!--==================== FOOTER ====================-->
+<style>
+  .site-footer { background: #111c11; color: #d8e8d8; padding: 4rem 1.5rem 0; margin-top: 5rem; }
+  .footer-inner { max-width: 1120px; margin: 0 auto; }
+  .footer-grid {
+    display: grid;
+    grid-template-columns: 1.6fr 1fr 1.1fr 2fr;
+    gap: 2.5rem;
+    padding-bottom: 3rem;
+  }
+  .footer-title { color: #fff; font-size: 0.95rem; font-weight: 700; margin-bottom: 1.1rem; letter-spacing: 0.04em; text-transform: uppercase; }
+  .footer-text { font-size: 0.88rem; line-height: 1.75; opacity: 0.65; }
+  .footer-link { display: block; color: rgba(255,255,255,0.65); font-size: 0.88rem; margin-bottom: 0.55rem; text-decoration: none; transition: color 0.2s; }
+  .footer-link:hover { color: var(--first-color); }
+  .footer-contact-row { display: flex; align-items: flex-start; gap: 0.6rem; margin-bottom: 0.7rem; font-size: 0.88rem; opacity: 0.75; }
+  .footer-contact-row i { color: var(--first-color); font-size: 1rem; flex-shrink: 0; margin-top: 0.1rem; }
+  .footer-social { display: flex; gap: 0.6rem; margin-top: 1.25rem; }
+  .footer-social a {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12);
+    display: flex; align-items: center; justify-content: center;
+    color: rgba(255,255,255,0.7); font-size: 1rem; text-decoration: none; transition: all 0.2s;
+  }
+  .footer-social a:hover { background: var(--first-color); border-color: var(--first-color); color: #fff; }
+  .footer-map iframe {
+    width: 100%; height: 215px; border: none; border-radius: 0.75rem;
+    opacity: 0.92; display: block;
+  }
+  .footer-map-link { display: block; text-align: right; font-size: 0.75rem; color: rgba(255,255,255,0.35); margin-top: 0.4rem; text-decoration: none; }
+  .footer-map-link:hover { color: var(--first-color); }
+  .footer-bottom {
+    border-top: 1px solid rgba(255,255,255,0.07);
+    padding: 1.25rem 0;
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 0.8rem; color: rgba(255,255,255,0.35); flex-wrap: wrap; gap: 0.5rem;
+  }
+  @media (max-width: 900px) {
+    .footer-grid { grid-template-columns: 1fr 1fr; }
+    .footer-map { grid-column: 1 / -1; }
+  }
+  @media (max-width: 520px) {
+    .footer-grid { grid-template-columns: 1fr; }
+  }
+</style>
+
+<footer class="site-footer">
+  <div class="footer-inner">
+    <div class="footer-grid">
+
+      <!-- Brand -->
+      <div>
+        <a href="/" style="display:inline-flex;align-items:center;gap:0.5rem;text-decoration:none;margin-bottom:1rem;">
+          <img src="/assets/img/logo.svg" alt="logo" style="width:28px;filter:brightness(0) invert(1) sepia(1) saturate(3) hue-rotate(90deg);">
+          <span style="font-family:var(--second-font);font-size:1.5rem;color:#fff;font-weight:700;">WildCamp</span>
+        </a>
+        <p class="footer-text">Cung cấp trang bị dã ngoại chất lượng cao cho những chuyến hành trình hòa mình cùng thiên nhiên hoang dã.</p>
+        <div class="footer-social">
+          <a href="#" aria-label="Facebook"><i class="ri-facebook-fill"></i></a>
+          <a href="#" aria-label="Instagram"><i class="ri-instagram-line"></i></a>
+          <a href="#" aria-label="YouTube"><i class="ri-youtube-line"></i></a>
+          <a href="#" aria-label="TikTok"><i class="ri-tiktok-line"></i></a>
+        </div>
       </div>
-      <div style="border-top: 1px solid rgba(255,255,255,0.1); margin-top: 3rem; padding-top: 1.5rem; text-align: center; font-size: 0.85rem; opacity: 0.7;">
-         &copy; <script>document.write(new Date().getFullYear())</script> WildCamp. All rights reserved.
+
+      <!-- Quick links -->
+      <div>
+        <div class="footer-title">Liên Kết Nhanh</div>
+        <a class="footer-link" href="/">Trang Chủ</a>
+        <a class="footer-link" href="/#products">Sản Phẩm</a>
+        <a class="footer-link" href="/cart">Giỏ Hàng</a>
+        <a class="footer-link" href="/checkout">Thanh Toán</a>
+        <% if (typeof user !== 'undefined' && user) { %>
+          <a class="footer-link" href="/auth/logout">Đăng Xuất</a>
+        <% } else { %>
+          <a class="footer-link" href="/auth/login">Đăng Nhập</a>
+          <a class="footer-link" href="/auth/register">Đăng Ký</a>
+        <% } %>
       </div>
-   </footer>
+
+      <!-- Contact -->
+      <div>
+        <div class="footer-title">Liên Hệ</div>
+        <div class="footer-contact-row">
+          <i class="ri-map-pin-2-line"></i>
+          <span>Rừng Quốc Gia Ba Vì, Hà Nội</span>
+        </div>
+        <div class="footer-contact-row">
+          <i class="ri-phone-line"></i>
+          <span>1900 6868</span>
+        </div>
+        <div class="footer-contact-row">
+          <i class="ri-mail-send-line"></i>
+          <span>contact@wildcamp.vn</span>
+        </div>
+        <div class="footer-contact-row">
+          <i class="ri-time-line"></i>
+          <span>T2 – T7 &nbsp;|&nbsp; 8:00 – 18:00</span>
+        </div>
+      </div>
+
+      <!-- Map -->
+      <div class="footer-map">
+        <div class="footer-title">Tìm Chúng Tôi</div>
+        <iframe
+          src="https://www.openstreetmap.org/export/embed.html?bbox=105.30%2C21.02%2C105.42%2C21.14&amp;layer=mapnik&amp;marker=21.0765%2C105.3615"
+          title="Bản đồ WildCamp – Ba Vì, Hà Nội"
+          loading="lazy">
+        </iframe>
+        <a class="footer-map-link"
+           href="https://www.openstreetmap.org/#map=13/21.0765/105.3615"
+           target="_blank" rel="noopener">
+          Xem bản đồ lớn hơn ↗
+        </a>
+      </div>
+
+    </div><!-- /footer-grid -->
+
+    <div class="footer-bottom">
+      <span>&copy; <script>document.write(new Date().getFullYear())</script> WildCamp. All rights reserved.</span>
+      <span>Thiết kế với <i class="ri-heart-fill" style="color:#e74c3c;font-size:0.8rem;"></i> cho những người yêu thiên nhiên</span>
+    </div>
+  </div>
+</footer>

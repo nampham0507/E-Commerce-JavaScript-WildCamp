@@ -9,6 +9,7 @@ const Category = require("./models/Category");
 const Order    = require("./models/Order");
 const Cart     = require("./models/Cart");
 const CartItem = require("./models/CartItem");
+const Review   = require("./models/Review");
 const vnpay    = require("./services/vnpay");
 const app = express();
 
@@ -46,14 +47,9 @@ app.use((req, res, next) => {
   next();
 });
 
-// Share user + footer categories to all templates
-app.use(async (req, res, next) => {
+// Share user to all templates
+app.use((req, res, next) => {
   res.locals.user = req.session.user || null;
-  try {
-    res.locals.footerCategories = await Category.find({}).sort({ name: 1 }).limit(6);
-  } catch {
-    res.locals.footerCategories = [];
-  }
   next();
 });
 
@@ -348,6 +344,170 @@ app.get("/vnpay/return", requireLogin, async (req, res) => {
 
 app.get("/order-success", (req, res) => res.render("order-success"));
 app.get("/order-failed",  (req, res) => res.render("order-failed"));
+
+// ─── Product Detail & Reviews ─────────────────────────────────────────────────
+async function updateProductRating(productId) {
+  const reviews = await Review.find({ product: productId });
+  const avg = reviews.length
+    ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length
+    : 0;
+  await Product.findByIdAndUpdate(productId, { rating: Math.round(avg * 10) / 10 });
+}
+
+app.get("/product/:id", async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id);
+    if (!product) return res.redirect("/");
+
+    const rawReviews = await Review.find({ product: product._id })
+      .populate("user", "name")
+      .sort({ createdAt: -1 });
+
+    const currentId = req.session.user ? String(req.session.user.id) : null;
+    const isAdminUser = !!(req.session.user && req.session.user.role === "admin");
+
+    // Map to plain objects with server-computed permission flags so the
+    // template never has to compare ObjectId vs string (the source of past bugs).
+    const reviews = rawReviews.map(r => {
+      const ownerId = r.user ? String(r.user._id) : null;
+      const isOwn = !!(currentId && ownerId === currentId);
+
+      const replies = (r.replies || []).map(rep => ({
+        _id:       String(rep._id),
+        name:      rep.name,
+        role:      rep.role,
+        text:      rep.text,
+        createdAt: rep.createdAt,
+        // Only the reply's own author can delete it
+        canDelete: !!(currentId && String(rep.user) === currentId),
+      }));
+
+      const hasAdminReply = !!r.adminReply || replies.some(rep => rep.role === "admin");
+
+      // The last reply authored by the current user (drives the "Xóa" button target)
+      const ownReplies = (r.replies || []).filter(rep => currentId && String(rep.user) === currentId);
+      const lastOwnReplyId = ownReplies.length ? String(ownReplies[ownReplies.length - 1]._id) : null;
+
+      return {
+        _id:          r._id,
+        userName:     r.user ? r.user.name : "Người dùng",
+        rating:       r.rating,
+        comment:      r.comment,
+        createdAt:    r.createdAt,
+        adminReply:   r.adminReply,   // legacy single reply — kept for old data
+        replies,
+        isOwn,
+        lastOwnReplyId,
+        canReply: isAdminUser || (isOwn && hasAdminReply),
+      };
+    });
+
+    const avgRating = reviews.length
+      ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1)
+      : "0.0";
+
+    const userReview = reviews.find(r => r.isOwn) || null;
+
+    res.render("product/detail", { product, reviews, avgRating, userReview });
+  } catch (err) {
+    console.error("[product/detail]", err.message);
+    res.redirect("/");
+  }
+});
+
+app.post("/product/:id/review", requireLogin, async (req, res) => {
+  const productId = req.params.id;
+  try {
+    const r = parseInt(req.body.rating);
+    if (!r || r < 1 || r > 5) {
+      req.flash("error", "Vui lòng chọn số sao từ 1 đến 5.");
+      return res.redirect("/product/" + productId + "#reviews");
+    }
+    await Review.findOneAndUpdate(
+      { product: productId, user: req.session.user.id },
+      { rating: r, comment: (req.body.comment || "").trim() },
+      { upsert: true, new: true }
+    );
+    await updateProductRating(productId);
+    req.flash("success", "Đánh giá của bạn đã được lưu!");
+    res.redirect("/product/" + productId + "#reviews");
+  } catch (err) {
+    console.error("[review/add]", err.message);
+    req.flash("error", "Có lỗi xảy ra, vui lòng thử lại.");
+    res.redirect("/product/" + productId);
+  }
+});
+
+app.post("/product/:id/review/delete", requireLogin, async (req, res) => {
+  const productId = req.params.id;
+  try {
+    await Review.deleteOne({ product: productId, user: req.session.user.id });
+    await updateProductRating(productId);
+    req.flash("success", "Đã xóa đánh giá.");
+    res.redirect("/product/" + productId + "#reviews");
+  } catch (err) {
+    req.flash("error", "Có lỗi xảy ra.");
+    res.redirect("/product/" + productId);
+  }
+});
+
+app.post("/product/:id/review/:reviewId/reply", requireLogin, async (req, res) => {
+  const productId = req.params.id;
+  try {
+    const review = await Review.findById(req.params.reviewId);
+    if (!review) {
+      req.flash("error", "Không tìm thấy đánh giá.");
+      return res.redirect("/product/" + productId + "#reviews");
+    }
+
+    const isAdminUser = req.session.user.role === "admin";
+    const isOwner = String(review.user) === String(req.session.user.id);
+
+    // Only the admin or the review's own author may post a reply
+    if (!isAdminUser && !isOwner) {
+      req.flash("error", "Bạn không có quyền phản hồi đánh giá này.");
+      return res.redirect("/product/" + productId + "#reviews");
+    }
+
+    const text = (req.body.reply || "").trim();
+    if (text) {
+      review.replies.push({
+        user: req.session.user.id,
+        name: req.session.user.name,
+        role: isAdminUser ? "admin" : "customer",
+        text,
+      });
+      await review.save();
+    }
+  } catch (err) {
+    console.error("[review/reply]", err.message);
+    req.flash("error", "Có lỗi xảy ra khi gửi phản hồi.");
+  }
+  res.redirect("/product/" + productId + "#reviews");
+});
+
+app.post("/product/:id/review/:reviewId/reply/:replyId/delete", requireLogin, async (req, res) => {
+  const productId = req.params.id;
+  try {
+    const review = await Review.findById(req.params.reviewId);
+    if (!review) return res.redirect("/product/" + productId + "#reviews");
+
+    const idx = review.replies.findIndex(rep => String(rep._id) === req.params.replyId);
+    if (idx === -1) return res.redirect("/product/" + productId + "#reviews");
+
+    if (String(review.replies[idx].user) !== String(req.session.user.id)) {
+      req.flash("error", "Bạn không có quyền xóa phản hồi này.");
+      return res.redirect("/product/" + productId + "#reviews");
+    }
+
+    review.replies.splice(idx, 1);
+    await review.save();
+  } catch (err) {
+    console.error("[reply/delete]", err.message);
+    req.flash("error", "Có lỗi xảy ra.");
+  }
+  res.redirect("/product/" + productId + "#reviews");
+});
 
 // ─── Admin ────────────────────────────────────────────────────────────────────
 app.get("/admin", isAdmin, async (req, res) => {

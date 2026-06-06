@@ -1,0 +1,422 @@
+<%- include('../partials/header') %>
+
+<style>
+  /* ── Product Detail ── */
+  .pd-wrap { max-width: 1120px; margin: 0 auto; padding: 7.5rem 1.5rem 2rem; }
+  .pd-breadcrumb { display: flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; color: #888; margin-bottom: 2rem; flex-wrap: wrap; }
+  .pd-breadcrumb a { color: var(--first-color); text-decoration: none; }
+  .pd-breadcrumb a:hover { text-decoration: underline; }
+  .pd-main { display: grid; grid-template-columns: 1fr 1fr; gap: 3.5rem; align-items: start; margin-bottom: 4rem; }
+  .pd-img-box {
+    background: #fff; border-radius: 1rem; padding: 2rem;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.06); display: flex; align-items: center; justify-content: center;
+  }
+  .pd-img-box img { width: 100%; max-height: 380px; object-fit: contain; }
+  .pd-info { display: flex; flex-direction: column; gap: 1.1rem; }
+  .pd-category { display: inline-block; background: rgba(140,200,150,0.15); color: var(--first-color); padding: 0.25rem 0.75rem; border-radius: 2rem; font-size: 0.8rem; font-weight: 600; }
+  .pd-name { font-family: var(--second-font); font-size: 1.8rem; color: var(--title-color); line-height: 1.3; }
+  .pd-stars { display: flex; align-items: center; gap: 0.5rem; }
+  .pd-stars .stars { color: #e67e22; font-size: 1.1rem; letter-spacing: 0.05em; }
+  .pd-stars .stars .empty { color: #ddd; }
+  .pd-rating-num { font-weight: 700; color: var(--title-color); }
+  .pd-rating-count { color: #888; font-size: 0.88rem; }
+  .pd-price { font-size: 2rem; font-weight: 700; color: var(--first-color); }
+  .pd-desc { font-size: 0.93rem; line-height: 1.75; color: #555; }
+  .pd-actions { display: flex; gap: 0.75rem; margin-top: 0.5rem; }
+  .pd-actions form { flex: 1; }
+  .pd-actions button { width: 100%; padding: 0.85rem; border: none; border-radius: 0.6rem; font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: opacity 0.2s; }
+  .btn-cart { background: var(--gradient-color); color: #fff; }
+  .btn-buynow { background: #e67e22; color: #fff; }
+  .btn-cart:hover, .btn-buynow:hover { opacity: 0.88; }
+
+  /* ── Reviews ── */
+  .rv-section { margin-bottom: 4rem; }
+  .rv-section h2 { font-family: var(--second-font); font-size: 1.4rem; color: var(--title-color); margin-bottom: 1.5rem; padding-bottom: 0.75rem; border-bottom: 2px solid #eee; }
+  .rv-summary { display: flex; align-items: center; gap: 1.5rem; background: #fff; border-radius: 1rem; padding: 1.5rem 2rem; box-shadow: 0 5px 15px rgba(0,0,0,0.04); margin-bottom: 2rem; }
+  .rv-avg-num { font-size: 3rem; font-weight: 700; color: var(--title-color); line-height: 1; }
+  .rv-avg-stars { font-size: 1.4rem; color: #e67e22; letter-spacing: 0.1em; }
+  .rv-avg-count { font-size: 0.88rem; color: #888; margin-top: 0.25rem; }
+
+  /* Star input */
+  .star-input { display: flex; gap: 0.2rem; margin-bottom: 0.25rem; }
+  .star-input span { font-size: 1.8rem; cursor: pointer; color: #ddd; transition: color 0.15s; line-height: 1; }
+  .star-input span.on { color: #e67e22; }
+
+  /* Write review form */
+  .rv-form-box { background: #fff; border-radius: 1rem; padding: 1.75rem 2rem; box-shadow: 0 5px 15px rgba(0,0,0,0.04); margin-bottom: 2rem; }
+  .rv-form-box h3 { font-size: 1rem; color: var(--title-color); font-weight: 700; margin-bottom: 1.1rem; }
+  .rv-form-box textarea { width: 100%; padding: 0.75rem; border: 1.5px solid #ddd; border-radius: 0.5rem; font-size: 0.9rem; resize: vertical; min-height: 90px; box-sizing: border-box; font-family: inherit; outline: none; transition: border 0.2s; }
+  .rv-form-box textarea:focus { border-color: var(--first-color); }
+  .rv-form-actions { display: flex; gap: 0.5rem; margin-top: 0.75rem; justify-content: flex-end; }
+  .rv-submit { background: var(--gradient-color); color: #fff; border: none; padding: 0.6rem 1.5rem; border-radius: 0.5rem; cursor: pointer; font-weight: 600; font-size: 0.9rem; }
+  .rv-cancel { background: #eee; color: #555; border: none; padding: 0.6rem 1rem; border-radius: 0.5rem; cursor: pointer; font-weight: 600; font-size: 0.9rem; }
+
+  /* Review card */
+  .rv-card { background: #fff; border-radius: 1rem; padding: 1.5rem 1.75rem; box-shadow: 0 4px 12px rgba(0,0,0,0.04); margin-bottom: 1.1rem; }
+  .rv-card-header { display: flex; align-items: center; gap: 0.9rem; margin-bottom: 0.75rem; }
+  .rv-avatar { width: 38px; height: 38px; border-radius: 50%; background: var(--gradient-color); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; flex-shrink: 0; }
+  .rv-user-name { font-weight: 600; color: var(--title-color); font-size: 0.92rem; }
+  .rv-date { font-size: 0.78rem; color: #aaa; }
+  .rv-stars { color: #e67e22; font-size: 0.95rem; }
+  .rv-comment { font-size: 0.9rem; color: #555; line-height: 1.65; margin-bottom: 0.75rem; }
+  .rv-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+  .rv-btn { background: none; border: 1px solid #e0e0e0; color: #555; font-size: 0.8rem; padding: 0.3rem 0.8rem; border-radius: 0.4rem; cursor: pointer; transition: all 0.15s; }
+  .rv-btn:hover { border-color: var(--first-color); color: var(--first-color); }
+  .rv-btn-del { border-color: #f5b7b1; color: #c0392b; }
+  .rv-btn-del:hover { background: #fadbd8; border-color: #c0392b; }
+
+  /* Reply thread */
+  .rv-thread { margin-top: 0.85rem; display: flex; flex-direction: column; gap: 0.6rem; }
+  .rv-reply { border-radius: 0 0.5rem 0.5rem 0; padding: 0.7rem 1rem; }
+  .rv-reply-admin { background: #f7fbf7; border-left: 3px solid var(--first-color); }
+  .rv-reply-customer { background: #fbf7f2; border-left: 3px solid #e67e22; margin-left: 1.5rem; }
+  .rv-reply-label { font-size: 0.78rem; font-weight: 700; color: var(--first-color); margin-bottom: 0.35rem; display: flex; align-items: center; gap: 0.35rem; flex-wrap: wrap; }
+  .rv-reply-customer .rv-reply-label { color: #b9651b; }
+  .rv-reply-date { font-weight: 400; color: #aaa; font-size: 0.72rem; margin-left: auto; }
+  .rv-reply-text { font-size: 0.88rem; color: #444; line-height: 1.6; }
+  .rv-del-reply { background: none; border: none; cursor: pointer; color: #c0392b; font-size: 1rem; line-height: 1; padding: 0 0.15rem; opacity: 0.55; transition: opacity 0.15s; }
+  .rv-del-reply:hover { opacity: 1; }
+
+  /* Reply form */
+  .rv-reply-form { margin-top: 0.75rem; display: none; }
+  .rv-reply-form textarea { width: 100%; padding: 0.6rem; border: 1.5px solid #ddd; border-radius: 0.4rem; font-size: 0.88rem; resize: vertical; min-height: 70px; box-sizing: border-box; font-family: inherit; outline: none; }
+  .rv-reply-form-actions { display: flex; gap: 0.5rem; margin-top: 0.5rem; justify-content: flex-end; }
+
+  @media (max-width: 768px) {
+    .pd-main { grid-template-columns: 1fr; gap: 2rem; }
+    .pd-img-box { max-height: 280px; }
+    .pd-name { font-size: 1.4rem; }
+    .pd-price { font-size: 1.6rem; }
+    .rv-summary { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+  }
+</style>
+
+<div class="pd-wrap">
+
+  <!-- Breadcrumb -->
+  <nav class="pd-breadcrumb">
+    <a href="/">Trang chủ</a>
+    <i class="ri-arrow-right-s-line"></i>
+    <a href="/#products"><%= product.category %></a>
+    <i class="ri-arrow-right-s-line"></i>
+    <span style="color:var(--title-color);"><%= product.name %></span>
+  </nav>
+
+  <!-- Flash -->
+  <% if (flash.success) { %>
+    <div style="background:#d4efdf;color:#196f3d;padding:0.75rem 1rem;border-radius:0.5rem;margin-bottom:1.5rem;font-size:0.9rem;"><%= flash.success %></div>
+  <% } %>
+  <% if (flash.error) { %>
+    <div style="background:#fadbd8;color:#c0392b;padding:0.75rem 1rem;border-radius:0.5rem;margin-bottom:1.5rem;font-size:0.9rem;"><%= flash.error %></div>
+  <% } %>
+
+  <!-- Product main -->
+  <div class="pd-main">
+    <!-- Image -->
+    <div class="pd-img-box">
+      <% if (product.image) { %>
+        <img src="<%= product.image %>" alt="<%= product.name %>">
+      <% } else { %>
+        <div style="width:100%;height:300px;display:flex;align-items:center;justify-content:center;color:#ccc;">
+          <i class="ri-image-line" style="font-size:4rem;"></i>
+        </div>
+      <% } %>
+    </div>
+
+    <!-- Info -->
+    <div class="pd-info">
+      <span class="pd-category"><%= product.category %></span>
+      <h1 class="pd-name"><%= product.name %></h1>
+
+      <!-- Star rating -->
+      <div class="pd-stars">
+        <span class="stars">
+          <% for (var s = 1; s <= 5; s++) { %>
+            <span class="<%= s <= Math.round(avgRating) ? '' : 'empty' %>">★</span>
+          <% } %>
+        </span>
+        <span class="pd-rating-num"><%= avgRating %></span>
+        <span class="pd-rating-count">(<%= reviews.length %> đánh giá)</span>
+      </div>
+
+      <div class="pd-price"><%= product.price.toLocaleString('vi-VN') %>đ</div>
+
+      <% if (product.description) { %>
+        <p class="pd-desc"><%= product.description %></p>
+      <% } %>
+
+      <!-- Divider -->
+      <div style="border-top:1px solid #eee;"></div>
+
+      <!-- Actions -->
+      <div class="pd-actions">
+        <form action="/cart/add" method="POST">
+          <input type="hidden" name="productId" value="<%= product._id %>">
+          <button type="submit" class="btn-cart"><i class="ri-shopping-cart-line"></i> Thêm Vào Giỏ</button>
+        </form>
+        <form action="/cart/buy-now" method="POST">
+          <input type="hidden" name="productId" value="<%= product._id %>">
+          <button type="submit" class="btn-buynow"><i class="ri-flashlight-line"></i> Mua Ngay</button>
+        </form>
+      </div>
+
+      <div style="display:flex;gap:1.25rem;font-size:0.82rem;color:#888;flex-wrap:wrap;">
+        <span><i class="ri-truck-line"></i> Miễn phí đổi trả 7 ngày</span>
+        <span><i class="ri-shield-check-line"></i> Bảo hành chính hãng</span>
+        <span><i class="ri-lock-line"></i> Thanh toán an toàn</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Reviews Section ── -->
+  <div class="rv-section" id="reviews">
+    <h2>Đánh Giá Sản Phẩm</h2>
+
+    <!-- Summary -->
+    <div class="rv-summary">
+      <div>
+        <div class="rv-avg-num"><%= avgRating %></div>
+        <div class="rv-avg-stars">
+          <% for (var s = 1; s <= 5; s++) { %>
+            <span style="color: <%= s <= Math.round(avgRating) ? '#e67e22' : '#ddd' %>;">★</span>
+          <% } %>
+        </div>
+        <div class="rv-avg-count"><%= reviews.length %> đánh giá</div>
+      </div>
+      <div style="flex:1;max-width:320px;">
+        <% for (var star = 5; star >= 1; star--) { %>
+          <%
+            var starCount = reviews.filter(r => r.rating === star).length;
+            var pct = reviews.length ? Math.round(starCount / reviews.length * 100) : 0;
+          %>
+          <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.3rem;font-size:0.82rem;">
+            <span style="width:14px;text-align:right;"><%= star %></span>
+            <span style="color:#e67e22;font-size:0.75rem;">★</span>
+            <div style="flex:1;height:7px;background:#eee;border-radius:4px;overflow:hidden;">
+              <div style="height:100%;background:#e67e22;width:<%= pct %>%;border-radius:4px;"></div>
+            </div>
+            <span style="width:28px;color:#888;"><%= starCount %></span>
+          </div>
+        <% } %>
+      </div>
+    </div>
+
+    <!-- Write review form -->
+    <% if (typeof user !== 'undefined' && user) { %>
+      <% if (!userReview) { %>
+        <!-- New review form -->
+        <div class="rv-form-box">
+          <h3>Viết đánh giá của bạn</h3>
+          <form action="/product/<%= product._id %>/review" method="POST">
+            <div style="margin-bottom:0.75rem;">
+              <div style="font-size:0.85rem;color:#555;margin-bottom:0.4rem;">Chọn số sao:</div>
+              <div class="star-input" id="starInput">
+                <span data-val="1">★</span>
+                <span data-val="2">★</span>
+                <span data-val="3">★</span>
+                <span data-val="4">★</span>
+                <span data-val="5">★</span>
+              </div>
+              <input type="hidden" name="rating" id="ratingVal" required>
+            </div>
+            <textarea name="comment" placeholder="Nhận xét của bạn về sản phẩm này... (không bắt buộc)"></textarea>
+            <div class="rv-form-actions">
+              <button type="submit" class="rv-submit">Gửi Đánh Giá</button>
+            </div>
+          </form>
+        </div>
+      <% } else { %>
+        <!-- Edit review form (pre-filled) -->
+        <div class="rv-form-box" id="editReviewBox">
+          <h3>Chỉnh sửa đánh giá của bạn</h3>
+          <form action="/product/<%= product._id %>/review" method="POST">
+            <div style="margin-bottom:0.75rem;">
+              <div style="font-size:0.85rem;color:#555;margin-bottom:0.4rem;">Số sao:</div>
+              <div class="star-input" id="starInput">
+                <% for (var ei = 1; ei <= 5; ei++) { %>
+                  <span data-val="<%= ei %>" class="<%= ei <= userReview.rating ? 'on' : '' %>">★</span>
+                <% } %>
+              </div>
+              <input type="hidden" name="rating" id="ratingVal" value="<%= userReview.rating %>">
+            </div>
+            <textarea name="comment" placeholder="Nhận xét..."><%= userReview.comment %></textarea>
+            <div class="rv-form-actions">
+              <button type="submit" class="rv-submit">Cập Nhật</button>
+            </div>
+          </form>
+        </div>
+      <% } %>
+    <% } else { %>
+      <div style="background:#fff;border-radius:1rem;padding:1.5rem 2rem;box-shadow:0 4px 12px rgba(0,0,0,0.04);margin-bottom:2rem;text-align:center;font-size:0.9rem;color:#888;">
+        <a href="/auth/login" style="color:var(--first-color);font-weight:600;">Đăng nhập</a> để viết đánh giá sản phẩm này.
+      </div>
+    <% } %>
+
+    <!-- Review list -->
+    <% if (reviews.length === 0) { %>
+      <div style="text-align:center;padding:3rem 0;opacity:0.5;">
+        <i class="ri-chat-smile-line" style="font-size:2.5rem;display:block;margin-bottom:0.75rem;"></i>
+        <p>Chưa có đánh giá nào. Hãy là người đầu tiên!</p>
+      </div>
+    <% } %>
+
+    <% reviews.forEach(rv => { %>
+      <% var initial = rv.userName ? rv.userName.charAt(0).toUpperCase() : '?'; %>
+      <div class="rv-card" id="rv-<%= rv._id %>">
+        <div class="rv-card-header">
+          <div class="rv-avatar"><%= initial %></div>
+          <div style="flex:1;">
+            <div class="rv-user-name">
+              <%= rv.userName %>
+              <% if (rv.isOwn) { %><span style="font-size:0.75rem;color:var(--first-color);font-weight:400;"> (bạn)</span><% } %>
+            </div>
+            <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
+              <span class="rv-stars">
+                <% for (var s = 1; s <= 5; s++) { %>
+                  <span style="color:<%= s <= rv.rating ? '#e67e22' : '#ddd' %>;">★</span>
+                <% } %>
+              </span>
+              <span class="rv-date"><%= new Date(rv.createdAt).toLocaleDateString('vi-VN') %></span>
+            </div>
+          </div>
+        </div>
+
+        <% if (rv.comment) { %>
+          <p class="rv-comment"><%= rv.comment %></p>
+        <% } %>
+
+        <!-- Reply thread -->
+        <% if (rv.adminReply || (rv.replies && rv.replies.length)) { %>
+          <div class="rv-thread">
+            <% if (rv.adminReply) { %>
+              <div class="rv-reply rv-reply-admin">
+                <div class="rv-reply-label"><i class="ri-shield-user-line"></i> Phản hồi từ WildCamp</div>
+                <div class="rv-reply-text"><%= rv.adminReply %></div>
+              </div>
+            <% } %>
+            <% rv.replies.forEach(rep => { %>
+              <div class="rv-reply <%= rep.role === 'admin' ? 'rv-reply-admin' : 'rv-reply-customer' %>">
+                <div class="rv-reply-label">
+                  <% if (rep.role === 'admin') { %>
+                    <i class="ri-shield-user-line"></i> <%= rep.name %> <span style="opacity:0.7;font-weight:400;">(WildCamp)</span>
+                  <% } else { %>
+                    <i class="ri-user-3-line"></i> <%= rep.name %>
+                  <% } %>
+                  <span class="rv-reply-date"><%= new Date(rep.createdAt).toLocaleDateString('vi-VN') %></span>
+                  <% if (rep.canDelete) { %>
+                    <form action="/product/<%= product._id %>/review/<%= rv._id %>/reply/<%= rep._id %>/delete" method="POST" style="margin:0;">
+                      <button type="submit" class="rv-del-reply" onclick="return confirm('Xóa phản hồi này?')" title="Xóa phản hồi">×</button>
+                    </form>
+                  <% } %>
+                </div>
+                <div class="rv-reply-text"><%= rep.text %></div>
+              </div>
+            <% }) %>
+          </div>
+        <% } %>
+
+        <!-- Actions -->
+        <div class="rv-actions" style="margin-top:0.5rem;">
+          <% if (rv.isOwn) { %>
+            <button class="rv-btn" onclick="scrollToEdit()">Sửa</button>
+            <% if (rv.lastOwnReplyId) { %>
+              <form action="/product/<%= product._id %>/review/<%= rv._id %>/reply/<%= rv.lastOwnReplyId %>/delete" method="POST" style="margin:0;">
+                <button type="submit" class="rv-btn rv-btn-del"
+                  onclick="return confirm('Xóa tin nhắn gần nhất của bạn?')">Xóa</button>
+              </form>
+            <% } else { %>
+              <form action="/product/<%= product._id %>/review/delete" method="POST" style="margin:0;">
+                <button type="submit" class="rv-btn rv-btn-del"
+                  onclick="return confirm('Xóa đánh giá này?')">Xóa</button>
+              </form>
+            <% } %>
+          <% } %>
+          <% if (rv.canReply) { %>
+            <button class="rv-btn" onclick="toggleReplyForm('<%= rv._id %>')">
+              <i class="ri-reply-line"></i> Trả lời
+            </button>
+          <% } %>
+        </div>
+
+        <!-- Reply form (admin to anyone, or owner replying back to admin) -->
+        <% if (rv.canReply) { %>
+          <div class="rv-reply-form" id="reply-form-<%= rv._id %>">
+            <form action="/product/<%= product._id %>/review/<%= rv._id %>/reply" method="POST">
+              <textarea name="reply" placeholder="Nhập phản hồi của bạn..." required></textarea>
+              <div class="rv-reply-form-actions">
+                <button type="button" class="rv-cancel" onclick="toggleReplyForm('<%= rv._id %>')">Hủy</button>
+                <button type="submit" class="rv-submit">Gửi phản hồi</button>
+              </div>
+            </form>
+          </div>
+        <% } %>
+      </div>
+    <% }) %>
+  </div>
+
+</div><!-- /pd-wrap -->
+
+<script>
+(function () {
+  // ── Star rating input ──
+  var starWrap = document.getElementById('starInput');
+  var ratingInput = document.getElementById('ratingVal');
+
+  if (starWrap) {
+    var stars = starWrap.querySelectorAll('span');
+
+    function paint(val) {
+      stars.forEach(function(s) {
+        s.classList.toggle('on', parseInt(s.dataset.val) <= val);
+      });
+    }
+
+    // Init from existing value (edit mode)
+    if (ratingInput && ratingInput.value) paint(parseInt(ratingInput.value));
+
+    stars.forEach(function(s) {
+      s.addEventListener('click', function() {
+        var v = parseInt(s.dataset.val);
+        if (ratingInput) ratingInput.value = v;
+        paint(v);
+      });
+      s.addEventListener('mouseenter', function() { paint(parseInt(s.dataset.val)); });
+    });
+    starWrap.addEventListener('mouseleave', function() {
+      paint(ratingInput && ratingInput.value ? parseInt(ratingInput.value) : 0);
+    });
+  }
+
+  // ── Reply form toggle ──
+  window.toggleReplyForm = function(id) {
+    var form = document.getElementById('reply-form-' + id);
+    if (form) {
+      var isHidden = form.style.display === 'none' || !form.style.display;
+      form.style.display = isHidden ? 'block' : 'none';
+      if (isHidden) form.querySelector('textarea').focus();
+    }
+  };
+
+  // ── Scroll to edit box ──
+  window.scrollToEdit = function() {
+    var box = document.getElementById('editReviewBox');
+    if (box) { box.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+  };
+
+  // ── Prevent empty star submission ──
+  var reviewForms = document.querySelectorAll('form[action*="/review"]');
+  reviewForms.forEach(function(form) {
+    if (!form.querySelector('input[name="rating"]')) return;
+    form.addEventListener('submit', function(e) {
+      var rv = form.querySelector('input[name="rating"]');
+      if (rv && !rv.value) {
+        e.preventDefault();
+        alert('Vui lòng chọn số sao trước khi gửi đánh giá.');
+      }
+    });
+  });
+})();
+</script>
+
+<%- include('../partials/footer') %>
+<%- include('../partials/scripts') %>

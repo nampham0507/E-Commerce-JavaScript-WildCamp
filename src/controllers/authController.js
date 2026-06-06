@@ -60,10 +60,11 @@ exports.login = async (req, res) => {
         }
 
         req.session.user = {
-            id: user._id,
+            id: user._id.toString(),
             name: user.name,
             email: user.email,
-            role: user.role
+            role: user.role,
+            phone: user.phone || ''
         };
 
         const returnTo = req.session.returnTo || (user.role === 'admin' ? '/admin' : '/');
