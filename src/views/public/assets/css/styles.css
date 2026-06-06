@@ -76,8 +76,8 @@ img {
 
 /*=============== REUSABLE CSS CLASSES ===============*/
 .container {
-  max-width: 1120px;
-  margin-inline: 1.5rem; /* margin-left: 1.5rem; margin-right: 1.5rem */
+  max-width: 1320px;
+  margin-inline: 1.5rem;
 }
 
 .main {
@@ -302,7 +302,7 @@ img {
 @media screen and (min-width: 1023px) {
   .nav {
     height: calc(var(--header-height) + 2rem);
-    column-gap: 4rem;
+    column-gap: 2rem;
   }
 
   .nav__toggle,
@@ -319,12 +319,13 @@ img {
 
   .nav__list {
     flex-direction: row;
-    column-gap: 5rem;
+    column-gap: 2rem;
   }
 
   .nav__buttons {
     flex-direction: row;
-    column-gap: 3rem;
+    column-gap: 1.2rem;
+    flex-shrink: 0;
   }
 
   .nav__logo {
@@ -348,7 +349,7 @@ img {
   }
 }
 
-@media screen and (min-width: 1120px) {
+@media screen and (min-width: 1320px) {
   .container {
     margin-inline: auto;
   }

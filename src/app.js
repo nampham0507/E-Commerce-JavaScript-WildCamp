@@ -112,10 +112,50 @@ app.use("/auth", authRoutes);
 // ─── Homepage ─────────────────────────────────────────────────────────────────
 app.get("/", async (req, res) => {
   try {
-    const products = await Product.find({}).sort({ createdAt: -1 }).limit(8);
-    res.render("homepage/index", { products });
-  } catch {
-    res.render("homepage/index", { products: [] });
+    const salesAgg = await Order.aggregate([
+      { $match: { status: { $ne: "Đã hủy" } } },
+      { $unwind: "$items" },
+      { $group: { _id: "$items.productId", sold: { $sum: "$items.quantity" } } },
+    ]);
+    const salesMap = {};
+    salesAgg.forEach(s => { if (s._id) salesMap[String(s._id)] = s.sold; });
+
+    const allProducts = await Product.find({}).sort({ createdAt: 1 }).lean();
+    allProducts.sort((a, b) => {
+      const scoreA = (a.rating || 0) * 1000 + (salesMap[String(a._id)] || 0);
+      const scoreB = (b.rating || 0) * 1000 + (salesMap[String(b._id)] || 0);
+      return scoreB - scoreA;
+    });
+
+    const featuredProducts = allProducts.slice(0, 4);
+    res.render("homepage/index", { products: featuredProducts, totalProducts: allProducts.length });
+  } catch (err) {
+    console.error("[home]", err);
+    res.render("homepage/index", { products: [], totalProducts: 0 });
+  }
+});
+
+// ─── All Products ─────────────────────────────────────────────────────────────
+app.get("/products", async (req, res) => {
+  try {
+    const { q = "", minPrice = "", maxPrice = "", category = "" } = req.query;
+    const filter = {};
+    if (q.trim()) filter.name = { $regex: q.trim(), $options: "i" };
+    if (minPrice || maxPrice) {
+      filter.price = {};
+      if (minPrice) filter.price.$gte = Number(minPrice);
+      if (maxPrice) filter.price.$lte = Number(maxPrice);
+    }
+    if (category) filter.category = category;
+
+    const [products, categories] = await Promise.all([
+      Product.find(filter).sort({ rating: -1, createdAt: 1 }).lean(),
+      Category.find({}).sort({ name: 1 }).lean(),
+    ]);
+    res.render("products/index", { products, categories, q, minPrice, maxPrice, category });
+  } catch (err) {
+    console.error("[products]", err);
+    res.render("products/index", { products: [], categories: [], q: "", minPrice: "", maxPrice: "", category: "" });
   }
 });
 
