@@ -68,6 +68,9 @@
   <main class="admin-content">
     <h2 class="home__title" style="font-family:var(--second-font);margin-bottom:2rem;">Quản Lý Đơn Hàng</h2>
 
+    <% if (flash.success) { %><div style="background:#d4efdf;color:#196f3d;padding:0.75rem 1rem;border-radius:0.5rem;margin-bottom:1.5rem;font-size:0.9rem;"><%= flash.success %></div><% } %>
+    <% if (flash.error) { %><div style="background:#fadbd8;color:#c0392b;padding:0.75rem 1rem;border-radius:0.5rem;margin-bottom:1.5rem;font-size:0.9rem;"><%= flash.error %></div><% } %>
+
     <div style="background:#fff;border-radius:1rem;padding:2rem;box-shadow:0 10px 20px rgba(0,0,0,0.05);overflow-x:auto;">
       <table style="width:100%;border-collapse:collapse;text-align:left;min-width:700px;">
         <thead>
@@ -107,16 +110,22 @@
                 </span>
               </td>
               <td style="padding:1rem 0.5rem;">
-                <form action="/admin/orders/status/<%= order._id %>" method="POST" style="display:flex;gap:0.4rem;align-items:center;">
-                  <select name="status" style="padding:0.3rem 0.5rem;border:1px solid #ddd;border-radius:0.4rem;font-size:0.82rem;">
-                    <option value="Chờ xác nhận"  <%= order.status === 'Chờ xác nhận'  ? 'selected' : '' %>>Chờ xác nhận</option>
-                    <option value="Đã xác nhận"   <%= order.status === 'Đã xác nhận'   ? 'selected' : '' %>>Đã xác nhận</option>
-                    <option value="Đang giao"      <%= order.status === 'Đang giao'     ? 'selected' : '' %>>Đang giao</option>
-                    <option value="Đã hoàn thành" <%= order.status === 'Đã hoàn thành' ? 'selected' : '' %>>Đã hoàn thành</option>
-                    <option value="Đã hủy"        <%= order.status === 'Đã hủy'        ? 'selected' : '' %>>Đã hủy</option>
-                  </select>
-                  <button type="submit" style="padding:0.3rem 0.6rem;background:var(--gradient-color);color:#fff;border:none;border-radius:0.4rem;cursor:pointer;font-size:0.8rem;">Lưu</button>
-                </form>
+                <% if (order.status === 'Đã hủy') { %>
+                  <span style="display:inline-flex;align-items:center;gap:0.35rem;padding:0.3rem 0.7rem;background:#f2f2f2;color:#999;border-radius:0.4rem;font-size:0.8rem;font-weight:600;white-space:nowrap;">
+                    <i class="ri-lock-line"></i> Đã khóa
+                  </span>
+                <% } else { %>
+                  <form action="/admin/orders/status/<%= order._id %>" method="POST" style="display:flex;gap:0.4rem;align-items:center;">
+                    <select name="status" style="padding:0.3rem 0.5rem;border:1px solid #ddd;border-radius:0.4rem;font-size:0.82rem;">
+                      <option value="Chờ xác nhận"  <%= order.status === 'Chờ xác nhận'  ? 'selected' : '' %>>Chờ xác nhận</option>
+                      <option value="Đã xác nhận"   <%= order.status === 'Đã xác nhận'   ? 'selected' : '' %>>Đã xác nhận</option>
+                      <option value="Đang giao"      <%= order.status === 'Đang giao'     ? 'selected' : '' %>>Đang giao</option>
+                      <option value="Đã hoàn thành" <%= order.status === 'Đã hoàn thành' ? 'selected' : '' %>>Đã hoàn thành</option>
+                      <option value="Đã hủy"        <%= order.status === 'Đã hủy'        ? 'selected' : '' %>>Đã hủy</option>
+                    </select>
+                    <button type="submit" style="padding:0.3rem 0.6rem;background:var(--gradient-color);color:#fff;border:none;border-radius:0.4rem;cursor:pointer;font-size:0.8rem;">Lưu</button>
+                  </form>
+                <% } %>
               </td>
               <td style="padding:1rem 0.5rem;">
                 <button

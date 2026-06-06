@@ -34,7 +34,7 @@ exports.getProducts = async (req, res) => {
 
 exports.addProduct = async (req, res) => {
     try {
-        const { name, category, price, description, imageUrl } = req.body;
+        const { name, category, price, description, imageUrl, stock } = req.body;
         let image = '';
 
         if (req.file) {
@@ -43,7 +43,7 @@ exports.addProduct = async (req, res) => {
             image = imageUrl.trim();
         }
 
-        await new Product({ name, category, price: Number(price), description, image }).save();
+        await new Product({ name, category, price: Number(price), description, image, stock: Math.max(0, parseInt(stock) || 0) }).save();
         req.flash('success', 'Thêm sản phẩm thành công!');
         res.redirect('/admin/products');
     } catch (err) {
@@ -55,22 +55,34 @@ exports.addProduct = async (req, res) => {
 exports.editProduct = async (req, res) => {
     try {
         const { id } = req.params;
-        const { name, category, price, description, imageUrl, existingImage } = req.body;
+        const { name, category, price, description, imageUrl, existingImage, stock } = req.body;
 
-        let image = existingImage || '';
-
-        if (req.file) {
-            deleteUploadedFile(existingImage);
-            image = UPLOAD_PREFIX + req.file.filename;
-        } else if (imageUrl && imageUrl.trim()) {
-            deleteUploadedFile(existingImage);
-            image = imageUrl.trim();
+        const product = await Product.findById(id);
+        if (!product) {
+            req.flash('error', 'Không tìm thấy sản phẩm.');
+            return res.redirect('/admin/products');
         }
 
-        await Product.findByIdAndUpdate(id, { name, category, price: Number(price), description, image });
+        if (req.file) {
+            deleteUploadedFile(product.image);
+            product.image = UPLOAD_PREFIX + req.file.filename;
+        } else if (imageUrl && imageUrl.trim()) {
+            deleteUploadedFile(product.image);
+            product.image = imageUrl.trim();
+        }
+        // else: keep existing image unchanged
+
+        product.name        = name;
+        product.category    = category;
+        product.price       = Number(price);
+        product.description = description || '';
+        product.stock       = Math.max(0, Number(stock) || 0);
+
+        await product.save();
         req.flash('success', 'Cập nhật sản phẩm thành công!');
         res.redirect('/admin/products');
     } catch (err) {
+        console.error('[editProduct]', err.message);
         req.flash('error', 'Lỗi hệ thống khi cập nhật sản phẩm.');
         res.redirect('/admin/products');
     }

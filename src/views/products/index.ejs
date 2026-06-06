@@ -221,12 +221,9 @@
           </div>
         </div>
 
-        <button type="submit" class="pl-btn-apply">
-          <i class="ri-filter-3-line"></i> Áp dụng bộ lọc
-        </button>
-        <a href="/products" class="pl-btn-reset">
+        <button type="button" class="pl-btn-reset" id="btnReset" style="width:100%;padding:0.55rem;background:#f2f4f0;color:#666;border:1.5px solid #ddd;border-radius:0.7rem;font-size:0.86rem;font-weight:600;cursor:pointer;margin-top:0.4rem;transition:background 0.15s,color 0.15s;">
           <i class="ri-refresh-line"></i> Xóa tất cả bộ lọc
-        </a>
+        </button>
       </form>
     </aside>
 
@@ -239,22 +236,9 @@
             <i class="ri-store-2-line"></i>
             <span id="visibleCount"><%= products.length %></span> sản phẩm
           </span>
-          <!-- Active filter chips -->
-          <div class="pl-active-filters">
-            <% if (q) { %>
-              <span class="pl-chip"><i class="ri-search-line"></i> "<%= q %>" <a href="/products?<%= [minPrice?`minPrice=${minPrice}`:'', maxPrice?`maxPrice=${maxPrice}`:'', category?`category=${encodeURIComponent(category)}`:''].filter(Boolean).join('&') %>">×</a></span>
-            <% } %>
-            <% if (minPrice || maxPrice) { %>
-              <span class="pl-chip"><i class="ri-money-dollar-circle-line"></i>
-                <%= minPrice ? Number(minPrice).toLocaleString('vi-VN')+'đ' : '0đ' %> –
-                <%= maxPrice ? Number(maxPrice).toLocaleString('vi-VN')+'đ' : '∞' %>
-                <a href="/products?<%= [q?`q=${encodeURIComponent(q)}`:'', category?`category=${encodeURIComponent(category)}`:''].filter(Boolean).join('&') %>">×</a>
-              </span>
-            <% } %>
-            <% if (category) { %>
-              <span class="pl-chip"><i class="ri-price-tag-3-line"></i> <%= category %> <a href="/products?<%= [q?`q=${encodeURIComponent(q)}`:'', minPrice?`minPrice=${minPrice}`:'', maxPrice?`maxPrice=${maxPrice}`:''].filter(Boolean).join('&') %>">×</a></span>
-            <% } %>
-          </div>
+          <span id="activeFilterTag" style="display:none;background:#fff3e6;border:1px solid #e67e22;color:#e67e22;font-size:0.75rem;font-weight:700;padding:0.25rem 0.75rem;border-radius:2rem;">
+            <i class="ri-filter-3-line"></i> Đang lọc
+          </span>
         </div>
 
         <select class="pl-sort" id="sortSelect">
@@ -279,7 +263,8 @@
             <div class="product-card pl-card"
               data-name="<%= product.name.toLowerCase() %>"
               data-price="<%= product.price %>"
-              data-rating="<%= product.rating || 0 %>">
+              data-rating="<%= product.rating || 0 %>"
+              data-category="<%= product.category %>">
               <a href="/product/<%= product._id %>" style="display:block;position:relative;">
                 <img src="<%= product.image %>" alt="<%= product.name %>" class="product-img">
               </a>
@@ -323,78 +308,137 @@
 
 <script>
 (function () {
-  var searchInput = document.getElementById('searchInput');
-  var sortSelect  = document.getElementById('sortSelect');
-  var grid        = document.getElementById('productGrid');
-  var noResult    = document.getElementById('noResult');
-  var noResultTerm = document.getElementById('noResultTerm');
-  var countSpan   = document.getElementById('visibleCount');
+  var searchInput   = document.getElementById('searchInput');
+  var minPriceInput = document.getElementById('minPrice');
+  var maxPriceInput = document.getElementById('maxPrice');
+  var sortSelect    = document.getElementById('sortSelect');
+  var btnReset      = document.getElementById('btnReset');
+  var grid          = document.getElementById('productGrid');
+  var noResult      = document.getElementById('noResult');
+  var countSpan     = document.getElementById('visibleCount');
+  var activeTag     = document.getElementById('activeFilterTag');
 
   if (!grid) return;
 
   var allCards = Array.from(grid.querySelectorAll('.pl-card'));
 
-  // ── Highlight search term inside card title ──
+  // ── Highlight match in title ──
   function highlight(el, term) {
     var title = el.querySelector('.product-title');
     if (!title) return;
-    var text = title.dataset.raw || title.textContent;
-    title.dataset.raw = text;
-    if (!term) { title.innerHTML = text; return; }
-    var re = new RegExp('(' + term.replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + ')', 'gi');
-    title.innerHTML = text.replace(re, '<mark style="background:hsl(140,60%,85%);border-radius:2px;padding:0 1px;">$1</mark>');
+    var raw = title.dataset.raw || title.textContent;
+    title.dataset.raw = raw;
+    if (!term) { title.innerHTML = raw; return; }
+    var re = new RegExp('(' + term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
+    title.innerHTML = raw.replace(re, '<mark style="background:hsl(140,60%,85%);border-radius:2px;padding:0 1px;">$1</mark>');
   }
 
-  // ── Live name filter ──
-  function applySearch() {
-    var term = (searchInput ? searchInput.value : '').trim().toLowerCase();
+  // ── Master filter ──
+  function applyFilters() {
+    var term   = (searchInput   ? searchInput.value.trim().toLowerCase()  : '');
+    var minP   = (minPriceInput && minPriceInput.value.trim()) ? parseFloat(minPriceInput.value) : 0;
+    var maxP   = (maxPriceInput && maxPriceInput.value.trim()) ? parseFloat(maxPriceInput.value) : Infinity;
+    var catEl  = document.querySelector('.pl-radio-item input[type=radio]:checked');
+    var activeCat = catEl ? catEl.value : '';
+
     var visible = 0;
     allCards.forEach(function (card) {
-      var name = card.dataset.name || '';
-      var match = !term || name.includes(term);
-      card.hidden = !match;
-      if (match) { visible++; highlight(card, term); }
+      var nameMatch  = !term      || (card.dataset.name || '').includes(term);
+      var price      = parseFloat(card.dataset.price) || 0;
+      var priceMatch = price >= minP && price <= maxP;
+      var catMatch   = !activeCat || card.dataset.category === activeCat;
+      var show       = nameMatch && priceMatch && catMatch;
+      card.hidden    = !show;
+      if (show) { visible++; highlight(card, term); }
+      else { highlight(card, ''); }
     });
+
     if (countSpan) countSpan.textContent = visible;
-    if (noResult) {
-      var show = visible === 0 && allCards.length > 0;
-      noResult.style.display = show ? 'block' : 'none';
-      if (noResultTerm) noResultTerm.textContent = term;
-    }
+    if (noResult)  noResult.style.display = (visible === 0 && allCards.length > 0) ? 'block' : 'none';
+
+    // "Đang lọc" indicator
+    var hasFilter = term || minPriceInput.value.trim() || maxPriceInput.value.trim() || activeCat;
+    if (activeTag) activeTag.style.display = hasFilter ? 'inline-flex' : 'none';
+
+    // Sync URL silently
+    var params = new URLSearchParams();
+    if (term)                                params.set('q', term);
+    if (minPriceInput && minPriceInput.value.trim()) params.set('minPrice', minPriceInput.value.trim());
+    if (maxPriceInput && maxPriceInput.value.trim()) params.set('maxPrice', maxPriceInput.value.trim());
+    if (activeCat)                           params.set('category', activeCat);
+    var qs = params.toString();
+    history.replaceState(null, '', '/products' + (qs ? '?' + qs : ''));
   }
 
-  if (searchInput) {
-    searchInput.addEventListener('input', applySearch);
+  // ── Debounce ──
+  function debounce(fn, ms) {
+    var t;
+    return function () { clearTimeout(t); t = setTimeout(fn, ms); };
   }
 
-  // ── Client-side sort ──
+  // ── Sort (operates on currently visible cards) ──
   function applySort() {
     if (!sortSelect) return;
-    var val = sortSelect.value;
+    var val   = sortSelect.value;
     var cards = allCards.slice();
     cards.sort(function (a, b) {
-      if (val === 'rating') return parseFloat(b.dataset.rating) - parseFloat(a.dataset.rating);
-      if (val === 'price-asc') return parseFloat(a.dataset.price) - parseFloat(b.dataset.price);
-      if (val === 'price-desc') return parseFloat(b.dataset.price) - parseFloat(a.dataset.price);
-      if (val === 'name-asc') return (a.dataset.name || '').localeCompare(b.dataset.name || '', 'vi');
+      if (val === 'rating')     return parseFloat(b.dataset.rating) - parseFloat(a.dataset.rating);
+      if (val === 'price-asc')  return parseFloat(a.dataset.price)  - parseFloat(b.dataset.price);
+      if (val === 'price-desc') return parseFloat(b.dataset.price)  - parseFloat(a.dataset.price);
+      if (val === 'name-asc')   return (a.dataset.name || '').localeCompare(b.dataset.name || '', 'vi');
       return 0;
     });
-    cards.forEach(function (c) { grid.appendChild(c); });
-    // move no-result div to end
-    if (noResult) grid.appendChild(noResult);
+    cards.forEach(function (c) { grid.insertBefore(c, noResult); });
   }
 
-  if (sortSelect) sortSelect.addEventListener('change', applySort);
+  // ── Listeners ──
+  if (searchInput)   searchInput.addEventListener('input',  debounce(applyFilters, 220));
+  if (minPriceInput) minPriceInput.addEventListener('input', debounce(applyFilters, 380));
+  if (maxPriceInput) maxPriceInput.addEventListener('input', debounce(applyFilters, 380));
+  if (sortSelect)    sortSelect.addEventListener('change',   applySort);
 
-  // ── Radio label active state ──
-  var radioItems = document.querySelectorAll('.pl-radio-item input[type=radio]');
-  radioItems.forEach(function (r) {
+  document.querySelectorAll('.pl-radio-item input[type=radio]').forEach(function (r) {
     r.addEventListener('change', function () {
       document.querySelectorAll('.pl-radio-item').forEach(function (li) {
         li.classList.toggle('active', li.querySelector('input').checked);
       });
+      applyFilters();
     });
   });
+
+  if (btnReset) {
+    btnReset.addEventListener('click', function () {
+      if (searchInput)   searchInput.value   = '';
+      if (minPriceInput) minPriceInput.value = '';
+      if (maxPriceInput) maxPriceInput.value = '';
+      var firstRadio = document.querySelector('.pl-radio-item input[type=radio][value=""]');
+      if (firstRadio) { firstRadio.checked = true; }
+      document.querySelectorAll('.pl-radio-item').forEach(function (li) {
+        var inp = li.querySelector('input');
+        li.classList.toggle('active', inp && inp.value === '');
+      });
+      applyFilters();
+    });
+  }
+
+  // ── Init: apply filters from URL params ──
+  (function initFromUrl() {
+    var params = new URLSearchParams(location.search);
+    if (searchInput   && params.get('q'))        searchInput.value   = params.get('q');
+    if (minPriceInput && params.get('minPrice')) minPriceInput.value = params.get('minPrice');
+    if (maxPriceInput && params.get('maxPrice')) maxPriceInput.value = params.get('maxPrice');
+    var cat = params.get('category');
+    if (cat) {
+      var radio = document.querySelector('.pl-radio-item input[value="' + CSS.escape(cat) + '"]');
+      if (radio) {
+        radio.checked = true;
+        document.querySelectorAll('.pl-radio-item').forEach(function (li) {
+          li.classList.toggle('active', li.querySelector('input').checked);
+        });
+      }
+    }
+    applyFilters();
+  })();
 })();
 </script>
 

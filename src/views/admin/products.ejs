@@ -33,6 +33,42 @@
     .admin-nav-list { flex-direction: row; flex-wrap: wrap; }
     .admin-nav-link { flex: 1 1 140px; justify-content: center; font-size: 0.85rem; padding: 0.5rem; }
   }
+
+  /* ── Searchable category dropdown ── */
+  .cat-combo { position: relative; }
+  .cat-combo-toggle {
+    width: 100%; display: flex; justify-content: space-between; align-items: center;
+    padding: 0.65rem 1rem; border: 1.5px solid #ddd; border-radius: 0.5rem;
+    background: #fff; font-size: 0.9rem; font-family: inherit; cursor: pointer;
+    color: var(--text-color); transition: border-color 0.2s; text-align: left;
+  }
+  .cat-combo-toggle:focus, .cat-combo.open .cat-combo-toggle { border-color: var(--first-color); outline: none; }
+  .cat-combo-toggle i { font-size: 1.1rem; color: #aaa; transition: transform 0.18s; flex-shrink: 0; }
+  .cat-combo.open .cat-combo-toggle i { transform: rotate(180deg); }
+  .cat-combo-label { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: inherit; }
+  .cat-combo-label.placeholder { color: #aaa; }
+  .cat-combo-panel {
+    display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+    background: #fff; border: 1.5px solid var(--first-color); border-radius: 0.5rem;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12); z-index: 200; overflow: hidden;
+  }
+  .cat-combo.open .cat-combo-panel { display: block; }
+  .cat-combo-search-row { display: flex; align-items: center; gap: 0; padding: 0.5rem; border-bottom: 1px solid #f0f0f0; }
+  .cat-combo-search-row i { color: #bbb; font-size: 0.95rem; padding-left: 0.3rem; flex-shrink: 0; }
+  .cat-combo-search {
+    flex: 1; border: none; outline: none; font-size: 0.87rem; font-family: inherit;
+    padding: 0.3rem 0.5rem; background: transparent; color: var(--text-color);
+  }
+  .cat-combo-list { max-height: 170px; overflow-y: auto; }
+  .cat-combo-item {
+    padding: 0.6rem 1rem; font-size: 0.88rem; cursor: pointer; color: #444;
+    transition: background 0.1s; display: flex; align-items: center; gap: 0.5rem;
+  }
+  .cat-combo-item:hover { background: hsl(140,50%,95%); color: var(--first-color); }
+  .cat-combo-item.cat-selected { background: hsl(140,50%,90%); color: var(--first-color); font-weight: 700; }
+  .cat-combo-item.cat-hidden { display: none; }
+  .cat-combo-empty { padding: 0.8rem 1rem; font-size: 0.85rem; color: #bbb; text-align: center; display: none; }
+  .cat-combo-error { font-size: 0.78rem; color: #c0392b; margin-top: 0.25rem; display: none; }
 </style>
 
 <div class="admin-container">
@@ -55,6 +91,7 @@
             <th style="padding:0.75rem 0.5rem;color:var(--title-color);">Tên sản phẩm</th>
             <th style="padding:0.75rem 0.5rem;color:var(--title-color);">Danh mục</th>
             <th style="padding:0.75rem 0.5rem;color:var(--title-color);">Giá (VNĐ)</th>
+            <th style="padding:0.75rem 0.5rem;color:var(--title-color);text-align:center;">Tồn kho</th>
             <th style="padding:0.75rem 0.5rem;color:var(--title-color);">Thao tác</th>
           </tr>
         </thead>
@@ -74,6 +111,17 @@
               <td style="padding:0.75rem 0.5rem;font-weight:500;max-width:180px;"><%= p.name %></td>
               <td style="padding:0.75rem 0.5rem;opacity:0.8;"><%= p.category %></td>
               <td style="padding:0.75rem 0.5rem;color:var(--first-color);font-weight:700;"><%= p.price.toLocaleString('vi-VN') %>đ</td>
+              <td style="padding:0.75rem 0.5rem;text-align:center;">
+                <%
+                  var stockVal = p.stock || 0;
+                  var stockBg = stockVal === 0 ? '#fadbd8' : stockVal <= 5 ? '#fdebd0' : '#d4efdf';
+                  var stockColor = stockVal === 0 ? '#78281f' : stockVal <= 5 ? '#784212' : '#196f3d';
+                  var stockLabel = stockVal === 0 ? 'Hết hàng' : stockVal <= 5 ? 'Sắp hết' : 'Còn hàng';
+                %>
+                <span style="background:<%= stockBg %>;color:<%= stockColor %>;padding:0.2rem 0.6rem;border-radius:2rem;font-size:0.75rem;font-weight:700;white-space:nowrap;">
+                  <%= stockLabel %> (<%= stockVal %>)
+                </span>
+              </td>
               <td style="padding:0.75rem 0.5rem;white-space:nowrap;">
                 <button onclick="openEditModal(
                   '<%= p._id %>',
@@ -81,7 +129,8 @@
                   '<%= p.category %>',
                   <%= p.price %>,
                   `<%= (p.description || '').replace(/`/g,'\\`') %>`,
-                  `<%= (p.image || '').replace(/`/g,'\\`') %>`
+                  `<%= (p.image || '').replace(/`/g,'\\`') %>`,
+                  <%= p.stock || 0 %>
                 )" style="background:none;border:none;color:#2980b9;cursor:pointer;font-weight:600;margin-right:1rem;">Sửa</button>
                 <form action="/admin/products/delete/<%= p._id %>" method="POST" style="display:inline"
                   onsubmit="return confirm('Xác nhận xóa sản phẩm này?')">
@@ -106,19 +155,37 @@
         <label>Tên sản phẩm *</label>
         <input type="text" name="name" placeholder="VD: Lều cắm trại 4 người" required>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;">
         <div class="form-group">
           <label>Danh mục *</label>
-          <select name="category" required>
-            <option value="">-- Chọn danh mục --</option>
-            <% categories.forEach(c => { %>
-              <option value="<%= c.name %>"><%= c.name %></option>
-            <% }) %>
-          </select>
+          <div class="cat-combo" id="addCatCombo">
+            <input type="hidden" name="category" id="addCatVal">
+            <button type="button" class="cat-combo-toggle" onclick="catToggle('addCatCombo')">
+              <span class="cat-combo-label placeholder">-- Chọn danh mục --</span>
+              <i class="ri-arrow-down-s-line"></i>
+            </button>
+            <div class="cat-combo-panel">
+              <div class="cat-combo-search-row">
+                <i class="ri-search-line"></i>
+                <input class="cat-combo-search" type="text" placeholder="Tìm danh mục...">
+              </div>
+              <div class="cat-combo-list">
+                <% categories.forEach(c => { %>
+                  <div class="cat-combo-item" data-value="<%= c.name %>"><i class="ri-price-tag-3-line" style="color:#aaa;font-size:0.85rem;"></i><%= c.name %></div>
+                <% }) %>
+              </div>
+              <div class="cat-combo-empty">Không tìm thấy</div>
+            </div>
+          </div>
+          <div class="cat-combo-error" id="addCatError">Vui lòng chọn danh mục</div>
         </div>
         <div class="form-group">
           <label>Giá (VNĐ) *</label>
           <input type="number" name="price" placeholder="350000" min="0" required>
+        </div>
+        <div class="form-group">
+          <label>Tồn kho *</label>
+          <input type="number" name="stock" placeholder="0" min="0" value="0" required>
         </div>
       </div>
       <div class="form-group">
@@ -157,19 +224,37 @@
         <label>Tên sản phẩm *</label>
         <input type="text" name="name" id="edit-name" required>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;">
         <div class="form-group">
           <label>Danh mục *</label>
-          <select name="category" id="edit-category" required>
-            <option value="">-- Chọn danh mục --</option>
-            <% categories.forEach(c => { %>
-              <option value="<%= c.name %>"><%= c.name %></option>
-            <% }) %>
-          </select>
+          <div class="cat-combo" id="editCatCombo">
+            <input type="hidden" name="category" id="editCatVal">
+            <button type="button" class="cat-combo-toggle" onclick="catToggle('editCatCombo')">
+              <span class="cat-combo-label placeholder">-- Chọn danh mục --</span>
+              <i class="ri-arrow-down-s-line"></i>
+            </button>
+            <div class="cat-combo-panel">
+              <div class="cat-combo-search-row">
+                <i class="ri-search-line"></i>
+                <input class="cat-combo-search" type="text" placeholder="Tìm danh mục...">
+              </div>
+              <div class="cat-combo-list">
+                <% categories.forEach(c => { %>
+                  <div class="cat-combo-item" data-value="<%= c.name %>"><i class="ri-price-tag-3-line" style="color:#aaa;font-size:0.85rem;"></i><%= c.name %></div>
+                <% }) %>
+              </div>
+              <div class="cat-combo-empty">Không tìm thấy</div>
+            </div>
+          </div>
+          <div class="cat-combo-error" id="editCatError">Vui lòng chọn danh mục</div>
         </div>
         <div class="form-group">
           <label>Giá (VNĐ) *</label>
           <input type="number" name="price" id="edit-price" min="0" required>
+        </div>
+        <div class="form-group">
+          <label>Tồn kho *</label>
+          <input type="number" name="stock" id="edit-stock" min="0" value="0" required>
         </div>
       </div>
       <div class="form-group">
@@ -205,65 +290,156 @@
 </div>
 
 <script>
-  function openModal(id) { document.getElementById(id).classList.add('open'); }
-  function closeModal(id) {
-    document.getElementById(id).classList.remove('open');
-    // reset file input & previews
-    const form = document.getElementById(id)?.querySelector('form') || document.getElementById('form-' + id.replace('modal-',''));
-    if (form) form.reset();
-    document.querySelectorAll('#' + id + ' .img-preview').forEach(el => { el.src=''; el.classList.remove('show'); });
+  // ═══════════════ SEARCHABLE CATEGORY COMBO ═══════════════
+  function catToggle(comboId) {
+    var combo = document.getElementById(comboId);
+    var wasOpen = combo.classList.contains('open');
+    // close all combos first
+    document.querySelectorAll('.cat-combo.open').forEach(function(c) { c.classList.remove('open'); });
+    if (!wasOpen) {
+      combo.classList.add('open');
+      var si = combo.querySelector('.cat-combo-search');
+      if (si) { si.value = ''; si.focus(); catFilter(si); }
+    }
   }
 
-  document.querySelectorAll('.modal-overlay').forEach(el => {
+  function catFilter(searchInput) {
+    var combo = searchInput.closest('.cat-combo');
+    var term = searchInput.value.trim().toLowerCase();
+    var items = combo.querySelectorAll('.cat-combo-item');
+    var visible = 0;
+    items.forEach(function(item) {
+      var match = item.dataset.value.toLowerCase().includes(term);
+      item.classList.toggle('cat-hidden', !match);
+      if (match) visible++;
+    });
+    var empty = combo.querySelector('.cat-combo-empty');
+    if (empty) empty.style.display = (visible === 0) ? 'block' : 'none';
+  }
+
+  function catSelectItem(item, comboId) {
+    var combo = document.getElementById(comboId);
+    var val = item.dataset.value;
+    combo.querySelector('input[type=hidden]').value = val;
+    var label = combo.querySelector('.cat-combo-label');
+    label.textContent = val;
+    label.classList.remove('placeholder');
+    combo.querySelectorAll('.cat-combo-item').forEach(function(i) { i.classList.remove('cat-selected'); });
+    item.classList.add('cat-selected');
+    combo.classList.remove('open');
+    // hide error
+    var errId = comboId === 'addCatCombo' ? 'addCatError' : 'editCatError';
+    document.getElementById(errId).style.display = 'none';
+    combo.querySelector('.cat-combo-toggle').style.borderColor = '';
+  }
+
+  function catComboReset(comboId) {
+    var combo = document.getElementById(comboId);
+    combo.querySelector('input[type=hidden]').value = '';
+    var label = combo.querySelector('.cat-combo-label');
+    label.textContent = '-- Chọn danh mục --';
+    label.classList.add('placeholder');
+    combo.querySelectorAll('.cat-combo-item').forEach(function(i) { i.classList.remove('cat-selected'); });
+    combo.classList.remove('open');
+  }
+
+  function catComboSet(comboId, value) {
+    var combo = document.getElementById(comboId);
+    var item = combo.querySelector('.cat-combo-item[data-value="' + value.replace(/"/g, '\\"') + '"]');
+    if (item) catSelectItem(item, comboId);
+    else catComboReset(comboId);
+  }
+
+  // init click handlers for combo items and search inputs
+  document.querySelectorAll('.cat-combo').forEach(function(combo) {
+    combo.addEventListener('click', function(e) { e.stopPropagation(); });
+    combo.querySelectorAll('.cat-combo-item').forEach(function(item) {
+      item.addEventListener('click', function() { catSelectItem(item, combo.id); });
+    });
+    var si = combo.querySelector('.cat-combo-search');
+    if (si) si.addEventListener('input', function() { catFilter(si); });
+  });
+
+  // close on outside click
+  document.addEventListener('click', function() {
+    document.querySelectorAll('.cat-combo.open').forEach(function(c) { c.classList.remove('open'); });
+  });
+
+  // ═══════════════ MODAL ═══════════════
+  function openModal(id) { document.getElementById(id).classList.add('open'); }
+
+  function closeModal(id) {
+    document.getElementById(id).classList.remove('open');
+    var form = document.getElementById(id).querySelector('form') || document.getElementById('form-' + id.replace('modal-', ''));
+    if (form) form.reset();
+    document.querySelectorAll('#' + id + ' .img-preview').forEach(function(el) { el.src = ''; el.classList.remove('show'); });
+    if (id === 'modal-add') catComboReset('addCatCombo');
+    if (id === 'modal-edit') catComboReset('editCatCombo');
+  }
+
+  document.querySelectorAll('.modal-overlay').forEach(function(el) {
     el.addEventListener('click', function(e) { if (e.target === this) { this.classList.remove('open'); } });
   });
 
+  // ── Add form validation ──
+  document.querySelector('#modal-add form').addEventListener('submit', function(e) {
+    var val = document.getElementById('addCatVal').value;
+    if (!val) {
+      e.preventDefault();
+      document.getElementById('addCatError').style.display = 'block';
+      document.getElementById('addCatCombo').querySelector('.cat-combo-toggle').style.borderColor = '#c0392b';
+    }
+  });
+
+  // ── Edit form validation ──
+  document.getElementById('form-edit').addEventListener('submit', function(e) {
+    var val = document.getElementById('editCatVal').value;
+    if (!val) {
+      e.preventDefault();
+      document.getElementById('editCatError').style.display = 'block';
+      document.getElementById('editCatCombo').querySelector('.cat-combo-toggle').style.borderColor = '#c0392b';
+    }
+  });
+
   function previewFromUrl(input, previewId) {
-    const img = document.getElementById(previewId);
+    var img = document.getElementById(previewId);
     if (input.value.trim()) { img.src = input.value.trim(); img.classList.add('show'); }
     else { img.src = ''; img.classList.remove('show'); }
   }
 
   function previewFromFile(input, previewId) {
-    const img = document.getElementById(previewId);
+    var img = document.getElementById(previewId);
     if (input.files && input.files[0]) {
-      const reader = new FileReader();
-      reader.onload = e => { img.src = e.target.result; img.classList.add('show'); };
+      var reader = new FileReader();
+      reader.onload = function(e) { img.src = e.target.result; img.classList.add('show'); };
       reader.readAsDataURL(input.files[0]);
-    } else {
-      img.src = ''; img.classList.remove('show');
-    }
+    } else { img.src = ''; img.classList.remove('show'); }
   }
 
-  function openEditModal(id, name, category, price, description, image) {
+  function openEditModal(id, name, category, price, description, image, stock) {
     document.getElementById('form-edit').action = '/admin/products/edit/' + id;
     document.getElementById('edit-name').value = name;
     document.getElementById('edit-price').value = price;
+    document.getElementById('edit-stock').value = stock || 0;
     document.getElementById('edit-description').value = description;
     document.getElementById('edit-existingImage').value = image;
 
-    // Set category
-    const sel = document.getElementById('edit-category');
-    for (let opt of sel.options) { opt.selected = opt.value === category; }
+    catComboSet('editCatCombo', category);
 
     // Reset image fields
     document.getElementById('edit-imageUrl').value = '';
     document.getElementById('edit-imageFile').value = '';
-    document.getElementById('edit-url-preview').src = ''; document.getElementById('edit-url-preview').classList.remove('show');
-    document.getElementById('edit-file-preview').src = ''; document.getElementById('edit-file-preview').classList.remove('show');
-    document.getElementById('edit-current-upload-preview').src = ''; document.getElementById('edit-current-upload-preview').classList.remove('show');
+    ['edit-url-preview','edit-file-preview','edit-current-upload-preview'].forEach(function(pid) {
+      var el = document.getElementById(pid); el.src = ''; el.classList.remove('show');
+    });
     document.getElementById('edit-current-upload-label').style.display = 'none';
 
-    const isUpload = image && image.startsWith('/assets/img/uploads/');
-
+    var isUpload = image && image.startsWith('/assets/img/uploads/');
     if (isUpload) {
-      // Show current uploaded image in the upload section
       document.getElementById('edit-current-upload-preview').src = image;
       document.getElementById('edit-current-upload-preview').classList.add('show');
       document.getElementById('edit-current-upload-label').style.display = 'block';
-      document.getElementById('edit-imageUrl').value = '';
     } else if (image) {
-      // Show URL in the URL field
       document.getElementById('edit-imageUrl').value = image;
       document.getElementById('edit-url-preview').src = image;
       document.getElementById('edit-url-preview').classList.add('show');
@@ -273,7 +449,7 @@
   }
 
   <% if (flash.error || flash.success) { %>
-  setTimeout(() => { document.querySelectorAll('.alert').forEach(a => a.style.display='none'); }, 4000);
+  setTimeout(function() { document.querySelectorAll('.alert').forEach(function(a) { a.style.display = 'none'; }); }, 4000);
   <% } %>
 </script>
 

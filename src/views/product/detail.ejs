@@ -141,6 +141,18 @@
 
       <div class="pd-price"><%= product.price.toLocaleString('vi-VN') %>đ</div>
 
+      <%
+        var st = product.stock || 0;
+        var stBg    = st === 0 ? '#fadbd8'  : st <= 5 ? '#fdebd0'  : '#d4efdf';
+        var stColor = st === 0 ? '#78281f'  : st <= 5 ? '#784212'  : '#196f3d';
+        var stBor   = st === 0 ? '#f1948a'  : st <= 5 ? '#f0b27a'  : '#82e0aa';
+        var stIcon  = st === 0 ? 'ri-close-circle-line' : st <= 5 ? 'ri-alarm-warning-line' : 'ri-checkbox-circle-line';
+        var stLabel = st === 0 ? 'Hết hàng' : st <= 5 ? ('Sắp hết — còn ' + st + ' sản phẩm') : ('Còn hàng — ' + st + ' sản phẩm');
+      %>
+      <div style="display:inline-flex;align-items:center;gap:0.45rem;background:<%= stBg %>;color:<%= stColor %>;border:1.5px solid <%= stBor %>;padding:0.38rem 1rem;border-radius:2rem;font-size:0.85rem;font-weight:700;">
+        <i class="<%= stIcon %>"></i> <%= stLabel %>
+      </div>
+
       <% if (product.description) { %>
         <p class="pd-desc"><%= product.description %></p>
       <% } %>
@@ -149,16 +161,24 @@
       <div style="border-top:1px solid #eee;"></div>
 
       <!-- Actions -->
-      <div class="pd-actions">
-        <form action="/cart/add" method="POST">
-          <input type="hidden" name="productId" value="<%= product._id %>">
-          <button type="submit" class="btn-cart"><i class="ri-shopping-cart-line"></i> Thêm Vào Giỏ</button>
-        </form>
-        <form action="/cart/buy-now" method="POST">
-          <input type="hidden" name="productId" value="<%= product._id %>">
-          <button type="submit" class="btn-buynow"><i class="ri-flashlight-line"></i> Mua Ngay</button>
-        </form>
-      </div>
+      <% if (st === 0) { %>
+        <div class="pd-actions">
+          <button type="button" disabled style="flex:1;padding:0.85rem;border:none;border-radius:0.6rem;font-size:0.95rem;font-weight:600;background:#f0f0f0;color:#aaa;cursor:not-allowed;">
+            <i class="ri-close-circle-line"></i> Hết Hàng
+          </button>
+        </div>
+      <% } else { %>
+        <div class="pd-actions">
+          <form action="/cart/add" method="POST">
+            <input type="hidden" name="productId" value="<%= product._id %>">
+            <button type="submit" class="btn-cart"><i class="ri-shopping-cart-line"></i> Thêm Vào Giỏ</button>
+          </form>
+          <form action="/cart/buy-now" method="POST">
+            <input type="hidden" name="productId" value="<%= product._id %>">
+            <button type="submit" class="btn-buynow"><i class="ri-flashlight-line"></i> Mua Ngay</button>
+          </form>
+        </div>
+      <% } %>
 
       <div style="display:flex;gap:1.25rem;font-size:0.82rem;color:#888;flex-wrap:wrap;">
         <span><i class="ri-truck-line"></i> Miễn phí đổi trả 7 ngày</span>

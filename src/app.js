@@ -13,6 +13,15 @@ const Review   = require("./models/Review");
 const vnpay    = require("./services/vnpay");
 const app = express();
 
+// items: [{ productId, quantity }], direction: 'dec' | 'inc'
+async function adjustStock(items, direction) {
+  await Promise.all(items.map(item =>
+    Product.findByIdAndUpdate(item.productId, {
+      $inc: { stock: direction === 'dec' ? -item.quantity : item.quantity }
+    })
+  ));
+}
+
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 app.use(express.static(path.join(__dirname, "views/public")));
@@ -154,17 +163,8 @@ app.get("/", async (req, res) => {
 app.get("/products", async (req, res) => {
   try {
     const { q = "", minPrice = "", maxPrice = "", category = "" } = req.query;
-    const filter = {};
-    if (q.trim()) filter.name = { $regex: q.trim(), $options: "i" };
-    if (minPrice || maxPrice) {
-      filter.price = {};
-      if (minPrice) filter.price.$gte = Number(minPrice);
-      if (maxPrice) filter.price.$lte = Number(maxPrice);
-    }
-    if (category) filter.category = category;
-
     const [products, categories] = await Promise.all([
-      Product.find(filter).sort({ rating: -1, createdAt: 1 }).lean(),
+      Product.find({}).sort({ rating: -1, createdAt: 1 }).lean(),
       Category.find({}).sort({ name: 1 }).lean(),
     ]);
     res.render("products/index", { products, categories, q, minPrice, maxPrice, category });
@@ -358,6 +358,7 @@ app.post("/checkout", requireLogin, async (req, res) => {
       paymentStatus:  "N/A",
       status:         "Chờ xác nhận",
     }).save();
+    await adjustStock(items, 'dec');
     await CartItem.deleteMany({ cart: cart._id });
     res.redirect("/order-success");
   } catch (err) {
@@ -398,6 +399,7 @@ app.get("/vnpay/return", requireLogin, async (req, res) => {
       paymentStatus: "paid",
       status:        "Đã xác nhận",
     }).save();
+    await adjustStock(pending.items, 'dec');
 
     const cart = await Cart.findOne({ user: req.session.user.id });
     if (cart) await CartItem.deleteMany({ cart: cart._id });
@@ -456,6 +458,7 @@ app.post("/my-orders/:id/cancel", requireLogin, async (req, res) => {
     order.status = "Đã hủy";
     order.cancelReason = reason;
     await order.save();
+    await adjustStock(order.items, 'inc');
     req.flash("success", "Đã hủy đơn hàng thành công.");
     res.redirect("/my-orders/" + order._id);
   } catch (err) {
@@ -663,8 +666,24 @@ app.get("/admin/orders", isAdmin, async (req, res) => {
 
 app.post("/admin/orders/status/:id", isAdmin, async (req, res) => {
   try {
-    await Order.findByIdAndUpdate(req.params.id, { status: req.body.status });
-  } catch {}
+    const order = await Order.findById(req.params.id);
+    if (order) {
+      const prevStatus = order.status;
+      const newStatus  = req.body.status;
+      // Đơn đã hủy là trạng thái khóa — không cho admin đổi nữa
+      if (prevStatus === "Đã hủy") {
+        req.flash("error", "Đơn hàng đã bị hủy, không thể thay đổi trạng thái.");
+        return res.redirect("/admin/orders");
+      }
+      order.status = newStatus;
+      await order.save();
+      if (newStatus === "Đã hủy" && prevStatus !== "Đã hủy") {
+        await adjustStock(order.items, 'inc');
+      }
+    }
+  } catch (err) {
+    console.error("[admin/orders/status]", err.message);
+  }
   res.redirect("/admin/orders");
 });
 
