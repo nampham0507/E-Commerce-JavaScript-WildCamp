@@ -2,12 +2,14 @@ const mongoose = require('mongoose');
 
 const orderSchema = new mongoose.Schema({
     orderCode: { type: String, default: () => 'ORD' + Date.now() },
+    user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
     customer: {
         name:    { type: String, required: true },
         phone:   { type: String, required: true },
         address: { type: String, required: true }
     },
-    note: { type: String, default: '' },
+    note:         { type: String, default: '' },
+    cancelReason: { type: String, default: '' },
     items: [{
         productId: { type: mongoose.Schema.Types.ObjectId, ref: 'Product' },
         name:      String,

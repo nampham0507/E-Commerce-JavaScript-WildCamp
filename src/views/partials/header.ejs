@@ -97,10 +97,27 @@
             <ul class="nav__list">
                <li class="nav__item"><a href="/" class="nav__link">Trang Chủ</a></li>
                <li class="nav__item"><a href="/products" class="nav__link">Sản Phẩm</a></li>
-               <li class="nav__item"><a href="/cart" class="nav__link">Giỏ Hàng</a></li>
-               <li class="nav__item"><a href="/checkout" class="nav__link">Thanh Toán</a></li>
-               <% if (typeof locals.user !== 'undefined' && locals.user && locals.user.role === 'admin') { %>
-                  <li class="nav__item"><a href="/admin" class="nav__link">Quản Trị</a></li>
+               <% if (!(locals.user && locals.user.role === 'admin')) { %>
+               <li class="nav__item">
+                  <a href="/cart" class="nav__link" style="position:relative;display:inline-flex;align-items:center;gap:0.3rem;">
+                    Giỏ Hàng
+                    <span id="cartBadge" style="
+                      display:<%= (locals.cartCount && locals.cartCount > 0) ? 'inline-flex' : 'none' %>;
+                      align-items:center;justify-content:center;
+                      min-width:18px;height:18px;padding:0 4px;
+                      background:#e67e22;color:#fff;
+                      border-radius:2rem;font-size:0.62rem;font-weight:800;
+                      line-height:1;
+                    "><%= locals.cartCount || 0 %></span>
+                  </a>
+               </li>
+               <% } %>
+               <% if (typeof locals.user !== 'undefined' && locals.user) { %>
+                  <% if (locals.user.role !== 'admin') { %>
+                    <li class="nav__item"><a href="/my-orders" class="nav__link">Đơn Hàng</a></li>
+                  <% } else { %>
+                    <li class="nav__item"><a href="/admin" class="nav__link">Quản Trị</a></li>
+                  <% } %>
                <% } %>
             </ul>
 

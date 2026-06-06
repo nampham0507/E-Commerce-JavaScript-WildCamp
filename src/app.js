@@ -47,9 +47,22 @@ app.use((req, res, next) => {
   next();
 });
 
-// Share user to all templates
-app.use((req, res, next) => {
-  res.locals.user = req.session.user || null;
+// Share user + cart count to all templates
+app.use(async (req, res, next) => {
+  res.locals.user      = req.session.user || null;
+  res.locals.cartCount = 0;
+  if (req.session.user) {
+    try {
+      const cart = await Cart.findOne({ user: req.session.user.id }).lean();
+      if (cart) {
+        const agg = await CartItem.aggregate([
+          { $match: { cart: cart._id } },
+          { $group: { _id: null, total: { $sum: "$quantity" } } },
+        ]);
+        res.locals.cartCount = agg[0]?.total || 0;
+      }
+    } catch { /* bỏ qua lỗi nhỏ */ }
+  }
   next();
 });
 
@@ -60,12 +73,14 @@ const isAdmin = (req, res, next) => {
 
 const requireLogin = (req, res, next) => {
   if (req.session.user) return next();
-  // GET requests: redirect back after login
+  // AJAX request → JSON instead of redirect
+  if (req.headers["x-requested-with"] === "XMLHttpRequest") {
+    return res.status(401).json({ ok: false, redirect: "/auth/login" });
+  }
   if (req.method === "GET") {
     req.session.returnTo = req.originalUrl;
   } else if (req.body && req.body.productId &&
              (req.originalUrl === "/cart/add" || req.originalUrl === "/cart/buy-now")) {
-    // Save pending cart action to replay after login
     req.session.pendingCart = {
       productId: req.body.productId,
       quantity:  req.body.quantity  || 1,
@@ -202,14 +217,23 @@ app.get("/cart/apply-pending", requireLogin, async (req, res) => {
 });
 
 app.post("/cart/add", requireLogin, async (req, res) => {
+  const isAjax = req.headers["x-requested-with"] === "XMLHttpRequest";
   try {
     const { productId, quantity = 1 } = req.body;
     const qty = Math.max(1, parseInt(quantity) || 1);
     const cart = await getOrCreateCart(req.session.user.id);
     await upsertCartItem(cart._id, productId, qty);
+    if (isAjax) {
+      const agg = await CartItem.aggregate([
+        { $match: { cart: cart._id } },
+        { $group: { _id: null, total: { $sum: "$quantity" } } },
+      ]);
+      return res.json({ ok: true, cartCount: agg[0]?.total || 0 });
+    }
     res.redirect("/cart");
   } catch (err) {
     console.error("[cart/add]", err.message);
+    if (isAjax) return res.status(500).json({ ok: false, message: "Có lỗi xảy ra." });
     req.flash("error", "Không thể thêm vào giỏ hàng: " + err.message);
     res.redirect("/cart");
   }
@@ -303,6 +327,7 @@ app.post("/checkout", requireLogin, async (req, res) => {
       const orderCode = "ORD" + Date.now();
       req.session.pendingOrder = {
         orderCode,
+        userId: req.session.user.id,
         customer: { name, phone, address },
         note,
         items: items.map(i => ({ ...i, productId: i.productId.toString() })),
@@ -326,7 +351,8 @@ app.post("/checkout", requireLogin, async (req, res) => {
 
     // COD → chờ admin xác nhận
     await new Order({
-      customer: { name, phone, address },
+      user:           req.session.user.id,
+      customer:       { name, phone, address },
       note, items, total,
       paymentMethod:  "COD",
       paymentStatus:  "N/A",
@@ -363,6 +389,7 @@ app.get("/vnpay/return", requireLogin, async (req, res) => {
     // Thanh toán thành công → tạo đơn, đã thanh toán nên xác nhận luôn
     await new Order({
       orderCode:     pending.orderCode,
+      user:          pending.userId || null,
       customer:      pending.customer,
       note:          pending.note,
       items:         pending.items,
@@ -384,6 +411,59 @@ app.get("/vnpay/return", requireLogin, async (req, res) => {
 
 app.get("/order-success", (req, res) => res.render("order-success"));
 app.get("/order-failed",  (req, res) => res.render("order-failed"));
+
+// ─── My Orders ────────────────────────────────────────────────────────────────
+app.get("/my-orders", requireLogin, async (req, res) => {
+  try {
+    const orders = await Order.find({ user: req.session.user.id })
+      .sort({ createdAt: -1 })
+      .lean();
+    res.render("orders/index", { orders });
+  } catch (err) {
+    console.error("[my-orders]", err);
+    res.render("orders/index", { orders: [] });
+  }
+});
+
+app.get("/my-orders/:id", requireLogin, async (req, res) => {
+  try {
+    const order = await Order.findOne({ _id: req.params.id, user: req.session.user.id }).lean();
+    if (!order) {
+      req.flash("error", "Không tìm thấy đơn hàng.");
+      return res.redirect("/my-orders");
+    }
+    res.render("orders/detail", { order });
+  } catch (err) {
+    console.error("[my-orders/detail]", err);
+    req.flash("error", "Có lỗi xảy ra.");
+    res.redirect("/my-orders");
+  }
+});
+
+app.post("/my-orders/:id/cancel", requireLogin, async (req, res) => {
+  try {
+    const order = await Order.findOne({ _id: req.params.id, user: req.session.user.id });
+    if (!order) {
+      req.flash("error", "Không tìm thấy đơn hàng.");
+      return res.redirect("/my-orders");
+    }
+    const cancellable = ["Chờ xác nhận", "Đã xác nhận"];
+    if (!cancellable.includes(order.status)) {
+      req.flash("error", "Đơn hàng này không thể hủy.");
+      return res.redirect("/my-orders/" + order._id);
+    }
+    const reason = (req.body.cancelReason || "").trim() || "Không có lý do";
+    order.status = "Đã hủy";
+    order.cancelReason = reason;
+    await order.save();
+    req.flash("success", "Đã hủy đơn hàng thành công.");
+    res.redirect("/my-orders/" + order._id);
+  } catch (err) {
+    console.error("[my-orders/cancel]", err);
+    req.flash("error", "Có lỗi xảy ra.");
+    res.redirect("/my-orders");
+  }
+});
 
 // ─── Product Detail & Reviews ─────────────────────────────────────────────────
 async function updateProductRating(productId) {

@@ -3,5 +3,74 @@
 
    <!--=============== MAIN JS ===============-->
    <script src="/assets/js/main.js"></script>
+
+   <!--=============== TOAST + CART AJAX ===============-->
+   <style>
+     @keyframes _toastIn  { from { transform: translateX(110%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+     @keyframes _toastOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(110%); opacity: 0; } }
+   </style>
+   <script>
+   (function () {
+     // ── Toast ──
+     function showToast(msg, type) {
+       var wrap = document.getElementById('_wcToastWrap');
+       if (!wrap) {
+         wrap = document.createElement('div');
+         wrap.id = '_wcToastWrap';
+         wrap.style.cssText = 'position:fixed;top:5.5rem;right:1.2rem;z-index:9999;display:flex;flex-direction:column;gap:0.5rem;pointer-events:none;';
+         document.body.appendChild(wrap);
+       }
+       var el = document.createElement('div');
+       var bg = type === 'error' ? '#c0392b' : 'var(--first-color, #2e7d52)';
+       el.style.cssText = 'background:' + bg + ';color:#fff;padding:0.7rem 1.1rem;border-radius:0.65rem;font-size:0.88rem;font-weight:600;box-shadow:0 4px 18px rgba(0,0,0,0.18);display:flex;align-items:center;gap:0.45rem;animation:_toastIn 0.22s ease;max-width:260px;pointer-events:auto;';
+       var icon = type === 'error' ? 'ri-error-warning-line' : 'ri-checkbox-circle-line';
+       el.innerHTML = '<i class="' + icon + '" style="font-size:1.05rem;flex-shrink:0;"></i>' + msg;
+       wrap.appendChild(el);
+       setTimeout(function () {
+         el.style.animation = '_toastOut 0.22s ease forwards';
+         setTimeout(function () { el.remove(); }, 230);
+       }, 3000);
+     }
+
+     // ── Cart badge update ──
+     function updateCartBadge(count) {
+       var badge = document.getElementById('cartBadge');
+       if (!badge) return;
+       badge.textContent = count;
+       badge.style.display = count > 0 ? 'inline-flex' : 'none';
+     }
+
+     // ── Intercept tất cả form action="/cart/add" ──
+     document.addEventListener('submit', function (e) {
+       var form = e.target;
+       if (!form || !form.action) return;
+       var url = new URL(form.action, location.href);
+       if (url.pathname !== '/cart/add') return;
+
+       e.preventDefault();
+       var btn = form.querySelector('[type=submit]');
+       if (btn) { btn.disabled = true; }
+
+       fetch('/cart/add', {
+         method: 'POST',
+         headers: { 'X-Requested-With': 'XMLHttpRequest' },
+         body: new URLSearchParams(new FormData(form)),
+       })
+       .then(function (r) { return r.json(); })
+       .then(function (data) {
+         if (data.ok) {
+           showToast('Đã thêm vào giỏ hàng!');
+           updateCartBadge(data.cartCount);
+         } else if (data.redirect) {
+           window.location.href = data.redirect;
+         } else {
+           showToast(data.message || 'Có lỗi xảy ra.', 'error');
+         }
+       })
+       .catch(function () { showToast('Lỗi kết nối, vui lòng thử lại.', 'error'); })
+       .finally(function () { if (btn) btn.disabled = false; });
+     });
+   })();
+   </script>
 </body>
 </html>
