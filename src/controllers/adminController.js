@@ -1,39 +1,36 @@
 const User = require('../models/User');
 
-// Get all users
 exports.getUsers = async (req, res) => {
     try {
         const users = await User.find({});
-        res.render('admin/users', { users, error: null, success: null });
+        res.render('admin/users', { users });
     } catch (error) {
         res.status(500).send('Lỗi máy chủ');
     }
 };
 
-// Add new user
 exports.addUser = async (req, res) => {
     try {
         const { name, email, password, role } = req.body;
 
         const userExists = await User.findOne({ email });
         if (userExists) {
-            const users = await User.find({});
-            return res.render('admin/users', { users, error: 'Email đã tồn tại trong hệ thống.', success: null });
+            req.flash('error', 'Email đã tồn tại trong hệ thống.');
+            return res.redirect('/admin/users');
         }
 
         // Password is hashed automatically by the pre-save hook in the User model
         const newUser = new User({ name, email, password, role });
         await newUser.save();
 
-        const users = await User.find({});
-        res.render('admin/users', { users, error: null, success: 'Thêm người dùng thành công!' });
+        req.flash('success', 'Thêm người dùng thành công!');
+        res.redirect('/admin/users');
     } catch (error) {
-        const users = await User.find({});
-        res.render('admin/users', { users, error: 'Lỗi hệ thống khi thêm người dùng.', success: null });
+        req.flash('error', 'Lỗi hệ thống khi thêm người dùng.');
+        res.redirect('/admin/users');
     }
 };
 
-// Edit user (update name, email, role and optionally password)
 exports.editUser = async (req, res) => {
     try {
         const { id } = req.params;
@@ -41,8 +38,8 @@ exports.editUser = async (req, res) => {
 
         const user = await User.findById(id);
         if (!user) {
-            const users = await User.find({});
-            return res.render('admin/users', { users, error: 'Không tìm thấy người dùng.', success: null });
+            req.flash('error', 'Không tìm thấy người dùng.');
+            return res.redirect('/admin/users');
         }
 
         user.name = name;
@@ -64,31 +61,30 @@ exports.editUser = async (req, res) => {
             req.session.user.role = role;
         }
 
-        const users = await User.find({});
-        res.render('admin/users', { users, error: null, success: 'Cập nhật người dùng thành công!' });
+        req.flash('success', 'Cập nhật người dùng thành công!');
+        res.redirect('/admin/users');
     } catch (error) {
-        const users = await User.find({});
-        res.render('admin/users', { users, error: 'Lỗi hệ thống khi cập nhật người dùng.', success: null });
+        req.flash('error', 'Lỗi hệ thống khi cập nhật người dùng.');
+        res.redirect('/admin/users');
     }
 };
 
-// Delete user
 exports.deleteUser = async (req, res) => {
     try {
         const { id } = req.params;
 
         // Prevent self deletion
         if (req.session.user && req.session.user.id === id) {
-            const users = await User.find({});
-            return res.render('admin/users', { users, error: 'Bạn không thể tự xóa chính mình.', success: null });
+            req.flash('error', 'Bạn không thể tự xóa chính mình.');
+            return res.redirect('/admin/users');
         }
 
         await User.findByIdAndDelete(id);
 
-        const users = await User.find({});
-        res.render('admin/users', { users, error: null, success: 'Xóa người dùng thành công!' });
+        req.flash('success', 'Xóa người dùng thành công!');
+        res.redirect('/admin/users');
     } catch (error) {
-        const users = await User.find({});
-        res.render('admin/users', { users, error: 'Lỗi hệ thống khi xóa người dùng.', success: null });
+        req.flash('error', 'Lỗi hệ thống khi xóa người dùng.');
+        res.redirect('/admin/users');
     }
 };

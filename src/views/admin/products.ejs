@@ -44,8 +44,8 @@
       <button onclick="openModal('modal-add')" class="btn-buy" style="border:none;border-radius:0.5rem;cursor:pointer;padding:0.6rem 1.2rem;font-size:0.9rem;">+ Thêm sản phẩm</button>
     </div>
 
-    <% if (success) { %><div class="alert alert-success"><%= success %></div><% } %>
-    <% if (error) { %><div class="alert alert-error"><%= error %></div><% } %>
+    <% if (flash.success) { %><div class="alert alert-success"><%= flash.success %></div><% } %>
+    <% if (flash.error) { %><div class="alert alert-error"><%= flash.error %></div><% } %>
 
     <div style="background:#fff;border-radius:1rem;padding:2rem;box-shadow:0 10px 20px rgba(0,0,0,0.05);overflow-x:auto;">
       <table style="width:100%;border-collapse:collapse;text-align:left;min-width:600px;">
@@ -271,7 +271,7 @@
     openModal('modal-edit');
   }
 
-  <% if (error || success) { %>
+  <% if (flash.error || flash.success) { %>
   setTimeout(() => { document.querySelectorAll('.alert').forEach(a => a.style.display='none'); }, 4000);
   <% } %>
 </script>

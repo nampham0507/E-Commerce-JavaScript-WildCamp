@@ -3,11 +3,11 @@ const User = require('../models/User');
 const SEVEN_DAYS = 7 * 24 * 60 * 60 * 1000;
 
 exports.getLogin = (req, res) => {
-    res.render('auth/login', { error: null });
+    res.render('auth/login');
 };
 
 exports.getRegister = (req, res) => {
-    res.render('auth/register', { error: null });
+    res.render('auth/register');
 };
 
 exports.register = async (req, res) => {
@@ -16,7 +16,8 @@ exports.register = async (req, res) => {
 
         const userExists = await User.findOne({ email });
         if (userExists) {
-            return res.render('auth/register', { error: 'Email đã được sử dụng.' });
+            req.flash('error', 'Email đã được sử dụng.');
+            return res.redirect('/auth/register');
         }
 
         // First registered user becomes admin, the rest are customers
@@ -27,9 +28,11 @@ exports.register = async (req, res) => {
         const user = new User({ name, email, password, role });
         await user.save();
 
+        req.flash('success', 'Đăng ký thành công! Vui lòng đăng nhập.');
         res.redirect('/auth/login');
     } catch (error) {
-        res.render('auth/register', { error: 'Có lỗi xảy ra, vui lòng thử lại.' });
+        req.flash('error', 'Có lỗi xảy ra, vui lòng thử lại.');
+        res.redirect('/auth/register');
     }
 };
 
@@ -39,12 +42,14 @@ exports.login = async (req, res) => {
 
         const user = await User.findOne({ email });
         if (!user) {
-            return res.render('auth/login', { error: 'Email hoặc mật khẩu không chính xác.' });
+            req.flash('error', 'Email hoặc mật khẩu không chính xác.');
+            return res.redirect('/auth/login');
         }
 
         const isMatch = await user.comparePassword(password);
         if (!isMatch) {
-            return res.render('auth/login', { error: 'Email hoặc mật khẩu không chính xác.' });
+            req.flash('error', 'Email hoặc mật khẩu không chính xác.');
+            return res.redirect('/auth/login');
         }
 
         // "Remember me": keep the session for 7 days; otherwise it expires when the browser closes
@@ -65,7 +70,8 @@ exports.login = async (req, res) => {
         delete req.session.returnTo;
         res.redirect(returnTo);
     } catch (error) {
-        res.render('auth/login', { error: 'Có lỗi xảy ra, vui lòng thử lại.' });
+        req.flash('error', 'Có lỗi xảy ra, vui lòng thử lại.');
+        res.redirect('/auth/login');
     }
 };
 

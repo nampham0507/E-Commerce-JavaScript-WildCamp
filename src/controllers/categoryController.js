@@ -3,7 +3,7 @@ const Category = require('../models/Category');
 exports.getCategories = async (req, res) => {
     try {
         const categories = await Category.find({}).sort({ createdAt: -1 });
-        res.render('admin/categories', { categories, error: null, success: null });
+        res.render('admin/categories', { categories });
     } catch (err) {
         res.status(500).send('Lỗi máy chủ');
     }
@@ -14,15 +14,15 @@ exports.addCategory = async (req, res) => {
         const { name } = req.body;
         const exists = await Category.findOne({ name: name.trim() });
         if (exists) {
-            const categories = await Category.find({}).sort({ createdAt: -1 });
-            return res.render('admin/categories', { categories, error: 'Danh mục đã tồn tại.', success: null });
+            req.flash('error', 'Danh mục đã tồn tại.');
+            return res.redirect('/admin/categories');
         }
         await new Category({ name: name.trim() }).save();
-        const categories = await Category.find({}).sort({ createdAt: -1 });
-        res.render('admin/categories', { categories, error: null, success: 'Thêm danh mục thành công!' });
+        req.flash('success', 'Thêm danh mục thành công!');
+        res.redirect('/admin/categories');
     } catch (err) {
-        const categories = await Category.find({}).sort({ createdAt: -1 });
-        res.render('admin/categories', { categories, error: 'Lỗi hệ thống.', success: null });
+        req.flash('error', 'Lỗi hệ thống.');
+        res.redirect('/admin/categories');
     }
 };
 
@@ -32,25 +32,25 @@ exports.editCategory = async (req, res) => {
         const { name } = req.body;
         const exists = await Category.findOne({ name: name.trim(), _id: { $ne: id } });
         if (exists) {
-            const categories = await Category.find({}).sort({ createdAt: -1 });
-            return res.render('admin/categories', { categories, error: 'Tên danh mục đã tồn tại.', success: null });
+            req.flash('error', 'Tên danh mục đã tồn tại.');
+            return res.redirect('/admin/categories');
         }
         await Category.findByIdAndUpdate(id, { name: name.trim() });
-        const categories = await Category.find({}).sort({ createdAt: -1 });
-        res.render('admin/categories', { categories, error: null, success: 'Cập nhật danh mục thành công!' });
+        req.flash('success', 'Cập nhật danh mục thành công!');
+        res.redirect('/admin/categories');
     } catch (err) {
-        const categories = await Category.find({}).sort({ createdAt: -1 });
-        res.render('admin/categories', { categories, error: 'Lỗi hệ thống.', success: null });
+        req.flash('error', 'Lỗi hệ thống.');
+        res.redirect('/admin/categories');
     }
 };
 
 exports.deleteCategory = async (req, res) => {
     try {
         await Category.findByIdAndDelete(req.params.id);
-        const categories = await Category.find({}).sort({ createdAt: -1 });
-        res.render('admin/categories', { categories, error: null, success: 'Xóa danh mục thành công!' });
+        req.flash('success', 'Xóa danh mục thành công!');
+        res.redirect('/admin/categories');
     } catch (err) {
-        const categories = await Category.find({}).sort({ createdAt: -1 });
-        res.render('admin/categories', { categories, error: 'Lỗi hệ thống.', success: null });
+        req.flash('error', 'Lỗi hệ thống.');
+        res.redirect('/admin/categories');
     }
 };

@@ -129,15 +129,15 @@
          </button>
       </div>
 
-      <!-- Success & Error Messages -->
-      <% if (locals.success) { %>
+      <!-- Flash Messages -->
+      <% if (flash.success) { %>
          <div style="background-color: #d4efdf; color: #196f3d; padding: 0.75rem; border-radius: 0.5rem; margin-bottom: 1.5rem; text-align: center; font-size: 0.9rem; font-weight: 600;">
-            <%= success %>
+            <%= flash.success %>
          </div>
       <% } %>
-      <% if (locals.error) { %>
+      <% if (flash.error) { %>
          <div style="background-color: #fadbd8; color: #c0392b; padding: 0.75rem; border-radius: 0.5rem; margin-bottom: 1.5rem; text-align: center; font-size: 0.9rem; font-weight: 600;">
-            <%= error %>
+            <%= flash.error %>
          </div>
       <% } %>
 

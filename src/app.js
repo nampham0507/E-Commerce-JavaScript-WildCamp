@@ -1,11 +1,14 @@
 const express = require("express");
 const path = require("path");
 const session = require("express-session");
+const flash = require("connect-flash");
 const authRoutes = require("./routes/authRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const Product  = require("./models/Product");
 const Category = require("./models/Category");
 const Order    = require("./models/Order");
+const Cart     = require("./models/Cart");
+const CartItem = require("./models/CartItem");
 const app = express();
 
 app.set("view engine", "ejs");
@@ -27,6 +30,21 @@ app.use(session({
   cookie: { maxAge: 24 * 60 * 60 * 1000 },
 }));
 
+app.use(flash());
+
+// Always initialize flash locals so templates never throw ReferenceError
+app.use((req, res, next) => {
+  try {
+    res.locals.flash = {
+      success: req.flash("success")[0] || null,
+      error:   req.flash("error")[0]   || null,
+    };
+  } catch {
+    res.locals.flash = { success: null, error: null };
+  }
+  next();
+});
+
 // Share user + footer categories to all templates
 app.use(async (req, res, next) => {
   res.locals.user = req.session.user || null;
@@ -45,20 +63,45 @@ const isAdmin = (req, res, next) => {
 
 const requireLogin = (req, res, next) => {
   if (req.session.user) return next();
-  req.session.returnTo = req.originalUrl;
+  // GET requests: redirect back after login
+  if (req.method === "GET") {
+    req.session.returnTo = req.originalUrl;
+  } else if (req.body && req.body.productId &&
+             (req.originalUrl === "/cart/add" || req.originalUrl === "/cart/buy-now")) {
+    // Save pending cart action to replay after login
+    req.session.pendingCart = {
+      productId: req.body.productId,
+      quantity:  req.body.quantity  || 1,
+      buyNow:    req.originalUrl === "/cart/buy-now",
+    };
+    req.session.returnTo = "/cart/apply-pending";
+  } else {
+    req.session.returnTo = "/";
+  }
   res.redirect("/auth/login");
 };
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-async function buildCart(sessionCart) {
-  if (!sessionCart || sessionCart.length === 0) return { cartItems: [], total: 0 };
-  const ids = sessionCart.map(i => i.productId);
-  const products = await Product.find({ _id: { $in: ids } });
-  const cartItems = sessionCart.map(ci => {
-    const p = products.find(x => x._id.toString() === ci.productId);
-    if (!p) return null;
-    return { ...p.toObject(), quantity: ci.quantity, subtotal: p.price * ci.quantity };
-  }).filter(Boolean);
+// ─── Cart Helpers ─────────────────────────────────────────────────────────────
+async function getOrCreateCart(userId) {
+  let cart = await Cart.findOne({ user: userId });
+  if (!cart) cart = await Cart.create({ user: userId });
+  return cart;
+}
+
+async function buildCartFromDB(userId) {
+  const cart = await Cart.findOne({ user: userId });
+  if (!cart) return { cartItems: [], total: 0 };
+  const items = await CartItem.find({ cart: cart._id }).populate('product');
+  const cartItems = items
+    .filter(item => item.product)
+    .map(item => ({
+      _id:      item.product._id,
+      name:     item.product.name,
+      price:    item.product.price,
+      image:    item.product.image,
+      quantity: item.quantity,
+      subtotal: item.product.price * item.quantity,
+    }));
   const total = cartItems.reduce((s, i) => s + i.subtotal, 0);
   return { cartItems, total };
 }
@@ -79,42 +122,108 @@ app.get("/", async (req, res) => {
 // ─── Cart ─────────────────────────────────────────────────────────────────────
 app.get("/cart", async (req, res) => {
   try {
-    const { cartItems, total } = await buildCart(req.session.cart);
+    if (!req.session.user) return res.render("cart/index", { cartItems: [], total: 0 });
+    const { cartItems, total } = await buildCartFromDB(req.session.user.id);
     res.render("cart/index", { cartItems, total });
   } catch {
     res.render("cart/index", { cartItems: [], total: 0 });
   }
 });
 
-app.post("/cart/add", requireLogin, (req, res) => {
-  const { productId, quantity = 1 } = req.body;
-  if (!req.session.cart) req.session.cart = [];
-  const existing = req.session.cart.find(i => i.productId === productId);
-  if (existing) existing.quantity += parseInt(quantity);
-  else req.session.cart.push({ productId, quantity: parseInt(quantity) });
-  res.redirect("/cart");
-});
-
-app.post("/cart/remove", requireLogin, (req, res) => {
-  const { productId } = req.body;
-  if (req.session.cart)
-    req.session.cart = req.session.cart.filter(i => i.productId !== productId);
-  res.redirect("/cart");
-});
-
-app.post("/cart/update", requireLogin, (req, res) => {
-  const { productId, quantity } = req.body;
-  if (req.session.cart) {
-    const item = req.session.cart.find(i => i.productId === productId);
-    if (item) item.quantity = Math.max(1, parseInt(quantity) || 1);
+// Shared helper: upsert one item into a cart
+async function upsertCartItem(cartId, productId, qty) {
+  const existing = await CartItem.findOne({ cart: cartId, product: productId });
+  if (existing) {
+    existing.quantity += qty;
+    await existing.save();
+  } else {
+    await CartItem.create({ cart: cartId, product: productId, quantity: qty });
   }
-  res.redirect("/cart");
+}
+
+// Replay pending cart action saved before login redirect
+app.get("/cart/apply-pending", requireLogin, async (req, res) => {
+  try {
+    const pending = req.session.pendingCart;
+    if (pending) {
+      delete req.session.pendingCart;
+      const qty = Math.max(1, parseInt(pending.quantity) || 1);
+      const cart = await getOrCreateCart(req.session.user.id);
+      await upsertCartItem(cart._id, pending.productId, qty);
+      return res.redirect(pending.buyNow ? "/checkout" : "/cart");
+    }
+    res.redirect("/cart");
+  } catch (err) {
+    console.error("[cart/apply-pending]", err.message);
+    res.redirect("/cart");
+  }
+});
+
+app.post("/cart/add", requireLogin, async (req, res) => {
+  try {
+    const { productId, quantity = 1 } = req.body;
+    const qty = Math.max(1, parseInt(quantity) || 1);
+    const cart = await getOrCreateCart(req.session.user.id);
+    await upsertCartItem(cart._id, productId, qty);
+    res.redirect("/cart");
+  } catch (err) {
+    console.error("[cart/add]", err.message);
+    req.flash("error", "Không thể thêm vào giỏ hàng: " + err.message);
+    res.redirect("/cart");
+  }
+});
+
+app.post("/cart/buy-now", requireLogin, async (req, res) => {
+  try {
+    const { productId, quantity = 1 } = req.body;
+    const qty = Math.max(1, parseInt(quantity) || 1);
+    const cart = await getOrCreateCart(req.session.user.id);
+    await upsertCartItem(cart._id, productId, qty);
+    res.redirect("/checkout");
+  } catch (err) {
+    console.error("[cart/buy-now]", err.message);
+    res.redirect("/");
+  }
+});
+
+app.post("/cart/remove", requireLogin, async (req, res) => {
+  try {
+    const { productId } = req.body;
+    const cart = await Cart.findOne({ user: req.session.user.id });
+    if (cart) await CartItem.deleteOne({ cart: cart._id, product: productId });
+    res.redirect("/cart");
+  } catch (err) {
+    console.error("[cart/remove]", err.message);
+    res.redirect("/cart");
+  }
+});
+
+app.post("/cart/update", requireLogin, async (req, res) => {
+  try {
+    const { productId, quantity } = req.body;
+    const qty = parseInt(quantity) || 0;
+    const cart = await Cart.findOne({ user: req.session.user.id });
+    if (cart) {
+      if (qty <= 0) {
+        await CartItem.deleteOne({ cart: cart._id, product: productId });
+      } else {
+        await CartItem.findOneAndUpdate(
+          { cart: cart._id, product: productId },
+          { quantity: qty }
+        );
+      }
+    }
+    res.redirect("/cart");
+  } catch (err) {
+    console.error("[cart/update]", err.message);
+    res.redirect("/cart");
+  }
 });
 
 // ─── Checkout ─────────────────────────────────────────────────────────────────
 app.get("/checkout", requireLogin, async (req, res) => {
   try {
-    const { cartItems, total } = await buildCart(req.session.cart);
+    const { cartItems, total } = await buildCartFromDB(req.session.user.id);
     res.render("checkout/index", { cartItems, total });
   } catch {
     res.render("checkout/index", { cartItems: [], total: 0 });
@@ -124,22 +233,28 @@ app.get("/checkout", requireLogin, async (req, res) => {
 app.post("/checkout", requireLogin, async (req, res) => {
   try {
     const { name, phone, address, note, paymentMethod } = req.body;
-    const cart = req.session.cart || [];
-    if (cart.length === 0) return res.redirect("/cart");
+    const cart = await Cart.findOne({ user: req.session.user.id });
+    if (!cart) return res.redirect("/cart");
 
-    const ids = cart.map(i => i.productId);
-    const products = await Product.find({ _id: { $in: ids } });
-    const items = cart.map(ci => {
-      const p = products.find(x => x._id.toString() === ci.productId);
-      if (!p) return null;
-      return { productId: p._id, name: p.name, price: p.price, image: p.image, quantity: ci.quantity };
-    }).filter(Boolean);
+    const cartItems = await CartItem.find({ cart: cart._id }).populate('product');
+    const items = cartItems
+      .filter(ci => ci.product)
+      .map(ci => ({
+        productId: ci.product._id,
+        name:      ci.product.name,
+        price:     ci.product.price,
+        image:     ci.product.image,
+        quantity:  ci.quantity,
+      }));
+
+    if (items.length === 0) return res.redirect("/cart");
 
     const total = items.reduce((s, i) => s + i.price * i.quantity, 0);
     await new Order({ customer: { name, phone, address }, note, items, total, paymentMethod: paymentMethod || "COD" }).save();
-    req.session.cart = [];
+    await CartItem.deleteMany({ cart: cart._id });
     res.redirect("/order-success");
   } catch (err) {
+    req.flash("error", "Có lỗi xảy ra khi đặt hàng, vui lòng thử lại.");
     res.redirect("/checkout");
   }
 });

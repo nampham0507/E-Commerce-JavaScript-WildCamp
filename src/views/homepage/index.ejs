@@ -53,10 +53,16 @@
                </div>
                <div>
                   <div class="product-price"><%= typeof product.price === 'number' ? product.price.toLocaleString('vi-VN') + 'đ' : product.price %></div>
-                  <form action="/cart/add" method="POST">
-                     <input type="hidden" name="productId" value="<%= product._id %>">
-                     <button type="submit" class="btn-buy" style="width:100%;border:none;cursor:pointer;">Thêm Vào Giỏ</button>
-                  </form>
+                  <div style="display:flex;gap:0.5rem;margin-top:0.5rem;">
+                    <form action="/cart/add" method="POST" style="flex:1;">
+                      <input type="hidden" name="productId" value="<%= product._id %>">
+                      <button type="submit" class="btn-buy" style="width:100%;border:none;cursor:pointer;font-size:0.82rem;padding:0.6rem 0.4rem;">Thêm Vào Giỏ</button>
+                    </form>
+                    <form action="/cart/buy-now" method="POST" style="flex:1;">
+                      <input type="hidden" name="productId" value="<%= product._id %>">
+                      <button type="submit" style="width:100%;border:none;cursor:pointer;font-size:0.82rem;padding:0.6rem 0.4rem;border-radius:0.75rem;background:#e67e22;color:#fff;font-weight:600;">Mua Ngay</button>
+                    </form>
+                  </div>
                </div>
             </div>
          <% }) %>

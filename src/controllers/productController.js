@@ -15,15 +15,11 @@ function deleteUploadedFile(imagePath) {
     fs.unlink(filePath, () => {});
 }
 
-async function renderProducts(res, extra = {}) {
-    const products = await Product.find({}).sort({ createdAt: -1 });
-    const categories = await Category.find({}).sort({ name: 1 });
-    res.render('admin/products', { products, categories, error: null, success: null, ...extra });
-}
-
 exports.getProducts = async (req, res) => {
     try {
-        await renderProducts(res);
+        const products = await Product.find({}).sort({ createdAt: -1 });
+        const categories = await Category.find({}).sort({ name: 1 });
+        res.render('admin/products', { products, categories });
     } catch (err) {
         res.status(500).send('Lỗi máy chủ');
     }
@@ -41,9 +37,11 @@ exports.addProduct = async (req, res) => {
         }
 
         await new Product({ name, category, price: Number(price), description, image }).save();
-        await renderProducts(res, { success: 'Thêm sản phẩm thành công!' });
+        req.flash('success', 'Thêm sản phẩm thành công!');
+        res.redirect('/admin/products');
     } catch (err) {
-        await renderProducts(res, { error: 'Lỗi hệ thống khi thêm sản phẩm.' });
+        req.flash('error', 'Lỗi hệ thống khi thêm sản phẩm.');
+        res.redirect('/admin/products');
     }
 };
 
@@ -55,20 +53,19 @@ exports.editProduct = async (req, res) => {
         let image = existingImage || '';
 
         if (req.file) {
-            // New file uploaded — delete old uploaded file if any
             deleteUploadedFile(existingImage);
             image = UPLOAD_PREFIX + req.file.filename;
         } else if (imageUrl && imageUrl.trim()) {
-            // New URL provided — delete old uploaded file if any
             deleteUploadedFile(existingImage);
             image = imageUrl.trim();
         }
-        // else: keep existingImage as-is, no file saved
 
         await Product.findByIdAndUpdate(id, { name, category, price: Number(price), description, image });
-        await renderProducts(res, { success: 'Cập nhật sản phẩm thành công!' });
+        req.flash('success', 'Cập nhật sản phẩm thành công!');
+        res.redirect('/admin/products');
     } catch (err) {
-        await renderProducts(res, { error: 'Lỗi hệ thống khi cập nhật sản phẩm.' });
+        req.flash('error', 'Lỗi hệ thống khi cập nhật sản phẩm.');
+        res.redirect('/admin/products');
     }
 };
 
@@ -79,8 +76,10 @@ exports.deleteProduct = async (req, res) => {
             deleteUploadedFile(product.image);
             await product.deleteOne();
         }
-        await renderProducts(res, { success: 'Xóa sản phẩm thành công!' });
+        req.flash('success', 'Xóa sản phẩm thành công!');
+        res.redirect('/admin/products');
     } catch (err) {
-        await renderProducts(res, { error: 'Lỗi hệ thống khi xóa sản phẩm.' });
+        req.flash('error', 'Lỗi hệ thống khi xóa sản phẩm.');
+        res.redirect('/admin/products');
     }
 };

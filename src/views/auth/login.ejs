@@ -3,9 +3,14 @@
 <main class="main" style="padding-top: 8rem; min-height: 85vh; display: flex; align-items: center; justify-content: center;">
    <div style="background: #fff; border-radius: 1rem; padding: 3rem 2rem; box-shadow: 0 10px 25px rgba(0,0,0,0.05); width: 100%; max-width: 400px; margin-inline: 1.5rem;">
       <h2 style="color: var(--title-color); font-family: var(--second-font); margin-bottom: 2rem; text-align: center;">Đăng Nhập</h2>
-      <% if (error) { %>
+      <% if (flash.error) { %>
          <div style="background-color: #fadbd8; color: #c0392b; padding: 0.75rem; border-radius: 0.5rem; margin-bottom: 1.5rem; text-align: center; font-size: 0.9rem;">
-            <%= error %>
+            <%= flash.error %>
+         </div>
+      <% } %>
+      <% if (flash.success) { %>
+         <div style="background-color: #d4edda; color: #155724; padding: 0.75rem; border-radius: 0.5rem; margin-bottom: 1.5rem; text-align: center; font-size: 0.9rem;">
+            <%= flash.success %>
          </div>
       <% } %>
       <form action="/auth/login" method="POST" style="display: flex; flex-direction: column; gap: 1.5rem;">
