@@ -17,6 +17,11 @@ const orderSchema = new mongoose.Schema({
     }],
     total:         { type: Number, required: true },
     paymentMethod: { type: String, default: 'COD' },
+    paymentStatus: {
+        type:    String,
+        enum:    ['pending', 'paid', 'failed', 'N/A'],
+        default: 'N/A'
+    },
     status: {
         type:    String,
         enum:    ['Đang xử lý', 'Đã hoàn thành', 'Đã hủy'],

@@ -9,6 +9,7 @@ const Category = require("./models/Category");
 const Order    = require("./models/Order");
 const Cart     = require("./models/Cart");
 const CartItem = require("./models/CartItem");
+const vnpay    = require("./services/vnpay");
 const app = express();
 
 app.set("view engine", "ejs");
@@ -250,16 +251,93 @@ app.post("/checkout", requireLogin, async (req, res) => {
     if (items.length === 0) return res.redirect("/cart");
 
     const total = items.reduce((s, i) => s + i.price * i.quantity, 0);
-    await new Order({ customer: { name, phone, address }, note, items, total, paymentMethod: paymentMethod || "COD" }).save();
+
+    if (paymentMethod === "VNPay") {
+      // Tạo đơn hàng với trạng thái chờ thanh toán
+      const order = await new Order({
+        customer: { name, phone, address },
+        note, items, total,
+        paymentMethod:  "VNPay",
+        paymentStatus:  "pending",
+      }).save();
+
+      await CartItem.deleteMany({ cart: cart._id });
+
+      const ipAddr =
+        req.headers["x-forwarded-for"] ||
+        req.socket.remoteAddress ||
+        "127.0.0.1";
+
+      const payUrl = vnpay.createPaymentUrl(
+        order.orderCode,
+        total,
+        `Thanh toan don hang ${order.orderCode}`,
+        ipAddr
+      );
+      return res.redirect(payUrl);
+    }
+
+    // COD
+    await new Order({
+      customer: { name, phone, address },
+      note, items, total,
+      paymentMethod:  "COD",
+      paymentStatus:  "N/A",
+    }).save();
     await CartItem.deleteMany({ cart: cart._id });
     res.redirect("/order-success");
   } catch (err) {
+    console.error("[checkout]", err.message);
     req.flash("error", "Có lỗi xảy ra khi đặt hàng, vui lòng thử lại.");
     res.redirect("/checkout");
   }
 });
 
+// ─── VNPay Callbacks ───────────────────────────────────────────────────────────
+app.get("/vnpay/return", async (req, res) => {
+  const { valid, responseCode, txnRef } = vnpay.verifyReturn(req.query);
+
+  if (!valid) {
+    return res.redirect("/order-failed?reason=invalid_signature");
+  }
+
+  try {
+    const success = responseCode === "00";
+    await Order.findOneAndUpdate(
+      { orderCode: txnRef },
+      { paymentStatus: success ? "paid" : "failed" }
+    );
+    res.redirect(success ? "/order-success" : "/order-failed?reason=" + responseCode);
+  } catch (err) {
+    console.error("[vnpay/return]", err.message);
+    res.redirect("/order-failed?reason=server_error");
+  }
+});
+
+// IPN — VNPay server-to-server notification (không cần session/login)
+app.get("/vnpay/ipn", async (req, res) => {
+  const { valid, responseCode, txnRef, amount } = vnpay.verifyReturn(req.query);
+
+  if (!valid) return res.json({ RspCode: "97", Message: "Checksum failed" });
+
+  try {
+    const order = await Order.findOne({ orderCode: txnRef });
+    if (!order)       return res.json({ RspCode: "01", Message: "Order not found" });
+    if (order.total !== amount) return res.json({ RspCode: "04", Message: "Amount invalid" });
+    if (order.paymentStatus !== "pending")
+      return res.json({ RspCode: "02", Message: "Order already updated" });
+
+    order.paymentStatus = responseCode === "00" ? "paid" : "failed";
+    await order.save();
+    res.json({ RspCode: "00", Message: "Success" });
+  } catch (err) {
+    console.error("[vnpay/ipn]", err.message);
+    res.json({ RspCode: "99", Message: "Unknown error" });
+  }
+});
+
 app.get("/order-success", (req, res) => res.render("order-success"));
+app.get("/order-failed",  (req, res) => res.render("order-failed"));
 
 // ─── Admin ────────────────────────────────────────────────────────────────────
 app.get("/admin", isAdmin, async (req, res) => {
