@@ -7,7 +7,7 @@
   .admin-nav-link { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; border-radius: 0.5rem; color: var(--text-color); font-weight: 500; transition: all 0.3s ease; }
   .admin-nav-link:hover { background: rgba(140,200,150,0.1); color: var(--first-color); }
   .admin-nav-link.active { background: var(--gradient-color); color: #fff; }
-  .admin-content { flex-grow: 1; }
+  .admin-content { flex-grow: 1; min-width: 0; }
   .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 999; align-items: center; justify-content: center; }
   .modal-overlay.open { display: flex; }
   .modal { background: #fff; border-radius: 1rem; padding: 2rem; width: 100%; max-width: 420px; box-shadow: 0 20px 40px rgba(0,0,0,0.15); }
@@ -70,6 +70,7 @@
           <% }) %>
         </tbody>
       </table>
+      <%- include('partials/pagination') %>
     </div>
   </main>
 </div>

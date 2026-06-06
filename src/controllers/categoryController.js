@@ -1,9 +1,16 @@
 const Category = require('../models/Category');
 
+const PAGE_SIZE = 10;
+
 exports.getCategories = async (req, res) => {
     try {
-        const categories = await Category.find({}).sort({ createdAt: -1 });
-        res.render('admin/categories', { categories });
+        const currentPage = Math.max(1, parseInt(req.query.page) || 1);
+        const [categories, totalItems] = await Promise.all([
+            Category.find({}).sort({ createdAt: -1 }).skip((currentPage - 1) * PAGE_SIZE).limit(PAGE_SIZE),
+            Category.countDocuments()
+        ]);
+        const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
+        res.render('admin/categories', { categories, currentPage, totalPages, totalItems });
     } catch (err) {
         res.status(500).send('Lỗi máy chủ');
     }
