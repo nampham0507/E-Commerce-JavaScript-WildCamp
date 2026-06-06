@@ -11,7 +11,7 @@ exports.getUsers = async (req, res) => {
 
 exports.addUser = async (req, res) => {
     try {
-        const { name, email, password, role } = req.body;
+        const { name, email, phone, password, role } = req.body;
 
         const userExists = await User.findOne({ email });
         if (userExists) {
@@ -19,8 +19,7 @@ exports.addUser = async (req, res) => {
             return res.redirect('/admin/users');
         }
 
-        // Password is hashed automatically by the pre-save hook in the User model
-        const newUser = new User({ name, email, password, role });
+        const newUser = new User({ name, email, phone: phone, password, role });
         await newUser.save();
 
         req.flash('success', 'Thêm người dùng thành công!');
@@ -34,7 +33,7 @@ exports.addUser = async (req, res) => {
 exports.editUser = async (req, res) => {
     try {
         const { id } = req.params;
-        const { name, email, role, password } = req.body;
+        const { name, email, phone, role } = req.body;
 
         const user = await User.findById(id);
         if (!user) {
@@ -42,16 +41,10 @@ exports.editUser = async (req, res) => {
             return res.redirect('/admin/users');
         }
 
-        user.name = name;
+        user.name  = name;
         user.email = email;
-        user.role = role;
-
-        // Only update password when a new one is provided.
-        // Assigning it marks the field as modified so the pre-save hook hashes it.
-        if (password && password.trim() !== '') {
-            user.password = password.trim();
-        }
-
+        user.phone = phone || '';
+        user.role  = role;
         await user.save();
 
         // If the admin edited their own details, refresh the session copy

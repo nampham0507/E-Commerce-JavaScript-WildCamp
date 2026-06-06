@@ -11,6 +11,10 @@ const userSchema = new mongoose.Schema({
         required: true,
         unique: true
     },
+    phone: {
+        type: String,
+        required: true
+    },
     password: {
         type: String,
         required: true
@@ -22,16 +26,12 @@ const userSchema = new mongoose.Schema({
     }
 }, { timestamps: true });
 
-// Hash password automatically before saving (only when it changed)
-userSchema.pre('save', async function (next) {
-    if (!this.isModified('password')) return next();
-    try {
-        const salt = await bcrypt.genSalt(10);
-        this.password = await bcrypt.hash(this.password, salt);
-        next();
-    } catch (err) {
-        next(err);
-    }
+// Hash password automatically before saving (only when it changed).
+// Async pre-hook: Mongoose awaits the returned promise, so we must NOT call next().
+userSchema.pre('save', async function () {
+    if (!this.isModified('password')) return;
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
 });
 
 // Compare a plain password with the stored hash

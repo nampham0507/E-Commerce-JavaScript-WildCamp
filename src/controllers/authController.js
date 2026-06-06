@@ -12,7 +12,7 @@ exports.getRegister = (req, res) => {
 
 exports.register = async (req, res) => {
     try {
-        const { name, email, password } = req.body;
+        const { name, email, phone, password } = req.body;
 
         const userExists = await User.findOne({ email });
         if (userExists) {
@@ -24,13 +24,13 @@ exports.register = async (req, res) => {
         const userCount = await User.countDocuments();
         const role = userCount === 0 ? 'admin' : 'customer';
 
-        // Password is hashed automatically by the pre-save hook in the User model
-        const user = new User({ name, email, password, role });
+        const user = new User({ name, email, phone, password, role });
         await user.save();
 
         req.flash('success', 'Đăng ký thành công! Vui lòng đăng nhập.');
         res.redirect('/auth/login');
     } catch (error) {
+        console.error('[register]', error);
         req.flash('error', 'Có lỗi xảy ra, vui lòng thử lại.');
         res.redirect('/auth/register');
     }

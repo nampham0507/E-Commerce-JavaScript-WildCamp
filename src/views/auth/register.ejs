@@ -11,15 +11,19 @@
       <form action="/auth/register" method="POST" style="display: flex; flex-direction: column; gap: 1.5rem;">
          <div>
             <label style="display: block; font-size: 0.9rem; margin-bottom: 0.5rem;">Họ và tên</label>
-            <input type="text" name="name" placeholder="Nguyễn Văn A" required style="width: 100%; padding: 0.75rem; border: 1px solid #ccc; border-radius: 0.5rem;">
+            <input type="text" name="name" placeholder="Nguyễn Văn A" required autocomplete="name" style="width: 100%; padding: 0.75rem; border: 1px solid #ccc; border-radius: 0.5rem;">
          </div>
          <div>
             <label style="display: block; font-size: 0.9rem; margin-bottom: 0.5rem;">Email</label>
-            <input type="email" name="email" placeholder="example@gmail.com" required style="width: 100%; padding: 0.75rem; border: 1px solid #ccc; border-radius: 0.5rem;">
+            <input type="email" name="email" placeholder="example@gmail.com" required autocomplete="username" style="width: 100%; padding: 0.75rem; border: 1px solid #ccc; border-radius: 0.5rem;">
+         </div>
+         <div>
+            <label style="display: block; font-size: 0.9rem; margin-bottom: 0.5rem;">Số điện thoại</label>
+            <input type="tel" name="phone" placeholder="0901234567" required autocomplete="tel" style="width: 100%; padding: 0.75rem; border: 1px solid #ccc; border-radius: 0.5rem;">
          </div>
          <div>
             <label style="display: block; font-size: 0.9rem; margin-bottom: 0.5rem;">Mật khẩu</label>
-            <input type="password" name="password" placeholder="••••••••" required style="width: 100%; padding: 0.75rem; border: 1px solid #ccc; border-radius: 0.5rem;">
+            <input type="password" name="password" placeholder="••••••••" required autocomplete="new-password" style="width: 100%; padding: 0.75rem; border: 1px solid #ccc; border-radius: 0.5rem;">
          </div>
          <button type="submit" class="btn-buy" style="border: none; width: 100%; border-radius: 0.5rem; cursor: pointer; font-size: 1rem;">Đăng Ký</button>
       </form>
