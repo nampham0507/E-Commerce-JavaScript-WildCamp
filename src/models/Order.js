@@ -24,8 +24,8 @@ const orderSchema = new mongoose.Schema({
     },
     status: {
         type:    String,
-        enum:    ['Đang xử lý', 'Đã hoàn thành', 'Đã hủy'],
-        default: 'Đang xử lý'
+        enum:    ['Chờ xác nhận', 'Đã xác nhận', 'Đã hoàn thành', 'Đã hủy'],
+        default: 'Chờ xác nhận'
     }
 }, { timestamps: true });
 

@@ -48,17 +48,21 @@
               <td style="padding:1rem 0.5rem;opacity:0.8;font-size:0.88rem;"><%= new Date(order.createdAt).toLocaleDateString('vi-VN') %></td>
               <td style="padding:1rem 0.5rem;color:var(--first-color);font-weight:700;"><%= order.total.toLocaleString('vi-VN') %>đ</td>
               <td style="padding:1rem 0.5rem;">
-                <span style="display:inline-block;padding:0.25rem 0.75rem;border-radius:1rem;font-size:0.8rem;font-weight:600;
-                  <%= order.status === 'Đã hoàn thành' ? 'background:#d4efdf;color:#196f3d;' : (order.status === 'Đã hủy' ? 'background:#fadbd8;color:#78281f;' : 'background:#fcf3cf;color:#7e5109;') %>">
+                <% var _statusStyle = order.status === 'Đã hoàn thành' ? 'background:#d4efdf;color:#196f3d;'
+                     : order.status === 'Đã xác nhận' ? 'background:#d6eaf8;color:#1f618d;'
+                     : order.status === 'Đã hủy' ? 'background:#fadbd8;color:#78281f;'
+                     : 'background:#fcf3cf;color:#7e5109;'; %>
+                <span style="display:inline-block;padding:0.25rem 0.75rem;border-radius:1rem;font-size:0.8rem;font-weight:600;<%= _statusStyle %>">
                   <%= order.status %>
                 </span>
               </td>
               <td style="padding:1rem 0.5rem;">
                 <form action="/admin/orders/status/<%= order._id %>" method="POST" style="display:flex;gap:0.4rem;align-items:center;">
                   <select name="status" style="padding:0.3rem 0.5rem;border:1px solid #ddd;border-radius:0.4rem;font-size:0.82rem;">
-                    <option value="Đang xử lý"  <%= order.status === 'Đang xử lý'  ? 'selected' : '' %>>Đang xử lý</option>
+                    <option value="Chờ xác nhận"  <%= order.status === 'Chờ xác nhận'  ? 'selected' : '' %>>Chờ xác nhận</option>
+                    <option value="Đã xác nhận"   <%= order.status === 'Đã xác nhận'   ? 'selected' : '' %>>Đã xác nhận</option>
                     <option value="Đã hoàn thành" <%= order.status === 'Đã hoàn thành' ? 'selected' : '' %>>Đã hoàn thành</option>
-                    <option value="Đã hủy"       <%= order.status === 'Đã hủy'       ? 'selected' : '' %>>Đã hủy</option>
+                    <option value="Đã hủy"        <%= order.status === 'Đã hủy'        ? 'selected' : '' %>>Đã hủy</option>
                   </select>
                   <button type="submit" style="padding:0.3rem 0.6rem;background:var(--gradient-color);color:#fff;border:none;border-radius:0.4rem;cursor:pointer;font-size:0.8rem;">Lưu</button>
                 </form>

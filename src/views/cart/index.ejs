@@ -60,11 +60,11 @@
       <h3 style="color:var(--title-color);margin-bottom:1.5rem;">Tóm tắt đơn hàng</h3>
       <div style="display:flex;justify-content:space-between;margin-bottom:1rem;opacity:0.8;">
         <span>Tạm tính (<%= cartItems ? cartItems.length : 0 %> sản phẩm)</span>
-        <span><%= (total || 0).toLocaleString('vi-VN') %>đ</span>
+        <span><%= (subtotal || 0).toLocaleString('vi-VN') %>đ</span>
       </div>
       <div style="display:flex;justify-content:space-between;margin-bottom:1.5rem;opacity:0.8;">
         <span>Phí vận chuyển</span>
-        <span>Miễn phí</span>
+        <span><%= (shippingFee || 0).toLocaleString('vi-VN') %>đ</span>
       </div>
       <div style="display:flex;justify-content:space-between;font-weight:700;font-size:1.25rem;border-top:1px solid #eee;padding-top:1.5rem;margin-bottom:2rem;">
         <span>Tổng cộng</span>

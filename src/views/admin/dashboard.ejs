@@ -60,8 +60,11 @@
                 <td style="padding:0.75rem 0.5rem;"><%= o.customer.name %></td>
                 <td style="padding:0.75rem 0.5rem;color:var(--first-color);font-weight:600;"><%= o.total.toLocaleString('vi-VN') %>đ</td>
                 <td style="padding:0.75rem 0.5rem;">
-                  <span style="padding:0.2rem 0.6rem;border-radius:1rem;font-size:0.78rem;font-weight:600;
-                    <%= o.status === 'Đã hoàn thành' ? 'background:#d4efdf;color:#196f3d;' : (o.status === 'Đã hủy' ? 'background:#fadbd8;color:#78281f;' : 'background:#fcf3cf;color:#7e5109;') %>">
+                  <% var _st = o.status === 'Đã hoàn thành' ? 'background:#d4efdf;color:#196f3d;'
+                       : o.status === 'Đã xác nhận' ? 'background:#d6eaf8;color:#1f618d;'
+                       : o.status === 'Đã hủy' ? 'background:#fadbd8;color:#78281f;'
+                       : 'background:#fcf3cf;color:#7e5109;'; %>
+                  <span style="padding:0.2rem 0.6rem;border-radius:1rem;font-size:0.78rem;font-weight:600;<%= _st %>">
                     <%= o.status %>
                   </span>
                 </td>

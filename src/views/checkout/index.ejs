@@ -1,5 +1,40 @@
 <%- include('../partials/header') %>
 
+<style>
+  /* ── Custom searchable address select ── */
+  .addr-wrap { position: relative; }
+  .addr-display {
+    width: 100%; padding: 0.75rem; border: 1px solid #ccc; border-radius: 0.5rem;
+    background: #fff; cursor: pointer; display: flex; justify-content: space-between;
+    align-items: center; font-size: 0.95rem; color: #333; user-select: none;
+    box-sizing: border-box; transition: border-color 0.2s;
+  }
+  .addr-display:hover { border-color: var(--first-color); }
+  .addr-display.placeholder { color: #999; }
+  .addr-display .addr-arrow { font-size: 0.7rem; transition: transform 0.2s; flex-shrink: 0; }
+  .addr-wrap.open .addr-display { border-color: var(--first-color); }
+  .addr-wrap.open .addr-display .addr-arrow { transform: rotate(180deg); }
+  .addr-dropdown {
+    position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: #fff;
+    border: 1px solid #ccc; border-radius: 0.5rem; z-index: 999;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12); display: none; flex-direction: column; overflow: hidden;
+  }
+  .addr-wrap.open .addr-dropdown { display: flex; }
+  .addr-search {
+    padding: 0.6rem 0.75rem; border: none; border-bottom: 1px solid #eee;
+    outline: none; font-size: 0.88rem; width: 100%; box-sizing: border-box;
+  }
+  .addr-list { max-height: 200px; overflow-y: auto; }
+  .addr-option {
+    padding: 0.55rem 0.75rem; cursor: pointer; font-size: 0.88rem; color: #333; transition: background 0.15s;
+  }
+  .addr-option:hover { background: rgba(140,200,150,0.18); color: var(--first-color); }
+  .addr-option.no-result { color: #aaa; cursor: default; font-style: italic; }
+  .addr-loading { padding: 0.75rem; text-align: center; font-size: 0.85rem; color: #999; }
+  .addr-wrap.disabled .addr-display { background: #f5f5f5; cursor: not-allowed; color: #aaa; border-color: #ddd; }
+  .addr-wrap.disabled .addr-display:hover { border-color: #ddd; }
+</style>
+
 <main class="main" style="padding-top: 8rem; min-height: 80vh; max-width: 1120px; margin: 0 auto; padding-inline: 1.5rem;">
   <h2 class="home__title" style="margin-bottom: 2rem; font-family: var(--second-font);">Thanh Toán</h2>
 
@@ -14,33 +49,88 @@
       <p style="opacity:0.6;">Giỏ hàng trống. <a href="/" style="color:var(--first-color);">Tiếp tục mua sắm</a></p>
     </div>
   <% } else { %>
-  <form action="/checkout" method="POST">
+  <form action="/checkout" method="POST" id="checkoutForm">
   <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 3rem;">
 
     <!-- Shipping info -->
     <div style="background:#fff;border-radius:1rem;padding:2rem;box-shadow:0 10px 20px rgba(0,0,0,0.05);">
       <h3 style="color:var(--title-color);margin-bottom:1.5rem;">Thông tin giao hàng</h3>
       <div style="display:flex;flex-direction:column;gap:1.25rem;">
+
         <div>
           <label style="display:block;font-size:0.9rem;margin-bottom:0.5rem;font-weight:600;">Họ và tên *</label>
-          <input type="text" name="name" required placeholder="Nguyễn Văn A"
+          <input type="text" name="name" required placeholder="Nguyễn Văn A" autocomplete="name"
             value="<%= typeof user !== 'undefined' && user ? user.name : '' %>"
-            style="width:100%;padding:0.75rem;border:1px solid #ccc;border-radius:0.5rem;">
+            style="width:100%;padding:0.75rem;border:1px solid #ccc;border-radius:0.5rem;box-sizing:border-box;">
         </div>
+
         <div>
           <label style="display:block;font-size:0.9rem;margin-bottom:0.5rem;font-weight:600;">Số điện thoại *</label>
-          <input type="tel" name="phone" required placeholder="0901234567"
-            style="width:100%;padding:0.75rem;border:1px solid #ccc;border-radius:0.5rem;">
+          <input type="tel" name="phone" required placeholder="0901234567" autocomplete="tel"
+            value="<%= typeof user !== 'undefined' && user && user.phone ? user.phone : '' %>"
+            style="width:100%;padding:0.75rem;border:1px solid #ccc;border-radius:0.5rem;box-sizing:border-box;">
         </div>
+
+        <!-- Province -->
         <div>
-          <label style="display:block;font-size:0.9rem;margin-bottom:0.5rem;font-weight:600;">Địa chỉ giao hàng *</label>
-          <input type="text" name="address" required placeholder="Số nhà, Tên đường, Quận/Huyện"
-            style="width:100%;padding:0.75rem;border:1px solid #ccc;border-radius:0.5rem;">
+          <label style="display:block;font-size:0.9rem;margin-bottom:0.5rem;font-weight:600;">Tỉnh/Thành phố *</label>
+          <div class="addr-wrap" id="provinceWrap">
+            <div class="addr-display placeholder">
+              <span class="addr-text">Chọn tỉnh/thành phố</span>
+              <span class="addr-arrow">▼</span>
+            </div>
+            <div class="addr-dropdown">
+              <input class="addr-search" type="text" placeholder="Tìm kiếm tỉnh/thành...">
+              <div class="addr-list"><div class="addr-loading">Đang tải...</div></div>
+            </div>
+            <input type="hidden" name="province" id="provinceVal">
+          </div>
         </div>
+
+        <!-- District -->
+        <div>
+          <label style="display:block;font-size:0.9rem;margin-bottom:0.5rem;font-weight:600;">Quận/Huyện *</label>
+          <div class="addr-wrap disabled" id="districtWrap">
+            <div class="addr-display placeholder">
+              <span class="addr-text">Chọn quận/huyện</span>
+              <span class="addr-arrow">▼</span>
+            </div>
+            <div class="addr-dropdown">
+              <input class="addr-search" type="text" placeholder="Tìm kiếm quận/huyện...">
+              <div class="addr-list"></div>
+            </div>
+            <input type="hidden" name="district" id="districtVal">
+          </div>
+        </div>
+
+        <!-- Ward -->
+        <div>
+          <label style="display:block;font-size:0.9rem;margin-bottom:0.5rem;font-weight:600;">Phường/Xã *</label>
+          <div class="addr-wrap disabled" id="wardWrap">
+            <div class="addr-display placeholder">
+              <span class="addr-text">Chọn phường/xã</span>
+              <span class="addr-arrow">▼</span>
+            </div>
+            <div class="addr-dropdown">
+              <input class="addr-search" type="text" placeholder="Tìm kiếm phường/xã...">
+              <div class="addr-list"></div>
+            </div>
+            <input type="hidden" name="ward" id="wardVal">
+          </div>
+        </div>
+
+        <!-- Street address -->
+        <div>
+          <label style="display:block;font-size:0.9rem;margin-bottom:0.5rem;font-weight:600;">Số nhà, thôn/xóm *</label>
+          <input type="text" name="streetAddress" id="streetAddress" required
+            placeholder="VD: 123 Đường Lê Lợi, Thôn Đồng Mít" autocomplete="address-line1"
+            style="width:100%;padding:0.75rem;border:1px solid #ccc;border-radius:0.5rem;box-sizing:border-box;">
+        </div>
+
         <div>
           <label style="display:block;font-size:0.9rem;margin-bottom:0.5rem;">Ghi chú</label>
           <textarea name="note" placeholder="Lưu ý khi giao hàng..."
-            style="width:100%;padding:0.75rem;border:1px solid #ccc;border-radius:0.5rem;height:80px;resize:none;"></textarea>
+            style="width:100%;padding:0.75rem;border:1px solid #ccc;border-radius:0.5rem;height:80px;resize:none;box-sizing:border-box;"></textarea>
         </div>
       </div>
     </div>
@@ -61,7 +151,15 @@
             <div style="font-weight:700;color:var(--first-color);"><%= item.subtotal.toLocaleString('vi-VN') %>đ</div>
           </div>
         <% }) %>
-        <div style="display:flex;justify-content:space-between;font-weight:700;font-size:1.1rem;padding-top:0.5rem;">
+        <div style="display:flex;justify-content:space-between;margin-bottom:0.5rem;opacity:0.8;font-size:0.92rem;padding-top:0.5rem;">
+          <span>Tạm tính</span>
+          <span><%= subtotal.toLocaleString('vi-VN') %>đ</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:0.75rem;opacity:0.8;font-size:0.92rem;">
+          <span>Phí vận chuyển</span>
+          <span><%= shippingFee.toLocaleString('vi-VN') %>đ</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-weight:700;font-size:1.1rem;border-top:1px solid #eee;padding-top:0.75rem;">
           <span>Tổng cộng</span>
           <span style="color:var(--first-color);"><%= total.toLocaleString('vi-VN') %>đ</span>
         </div>
@@ -96,6 +194,141 @@
   </form>
   <% } %>
 </main>
+
+<script>
+(function () {
+  const API = 'https://provinces.open-api.vn/api';
+
+  class AddrSelect {
+    constructor(wrapId, onChange) {
+      this.wrap       = document.getElementById(wrapId);
+      this.display    = this.wrap.querySelector('.addr-display');
+      this.displayText= this.wrap.querySelector('.addr-text');
+      this.dropdown   = this.wrap.querySelector('.addr-dropdown');
+      this.search     = this.wrap.querySelector('.addr-search');
+      this.list       = this.wrap.querySelector('.addr-list');
+      this.hidden     = this.wrap.querySelector('input[type=hidden]');
+      this.placeholder= this.displayText.textContent;
+      this.onChange   = onChange || null;
+      this._data      = [];
+
+      this.display.addEventListener('click', () => {
+        if (this.wrap.classList.contains('disabled')) return;
+        this._isOpen() ? this._close() : this._open();
+      });
+      this.search.addEventListener('input', () => this._render(this.search.value));
+      document.addEventListener('click', (e) => {
+        if (!this.wrap.contains(e.target)) this._close();
+      });
+    }
+
+    populate(data) {
+      this._data = data;
+      this.wrap.classList.remove('disabled');
+      this._render('');
+    }
+
+    reset(disable) {
+      this._data = [];
+      this.list.innerHTML = '';
+      this.search.value = '';
+      this.displayText.textContent = this.placeholder;
+      this.display.classList.add('placeholder');
+      this.hidden.value = '';
+      this._close();
+      if (disable) this.wrap.classList.add('disabled');
+    }
+
+    _isOpen() { return this.wrap.classList.contains('open'); }
+
+    _open() {
+      this.wrap.classList.add('open');
+      this._render(this.search.value);
+      this.search.focus();
+    }
+
+    _close() {
+      this.wrap.classList.remove('open');
+      this.search.value = '';
+    }
+
+    _render(q) {
+      const filtered = q
+        ? this._data.filter(o => o.name.toLowerCase().includes(q.toLowerCase()))
+        : this._data;
+
+      if (!filtered.length) {
+        this.list.innerHTML = '<div class="addr-option no-result">Không tìm thấy kết quả</div>';
+        return;
+      }
+
+      this.list.innerHTML = filtered
+        .map(o => `<div class="addr-option" data-code="${o.code}" data-name="${o.name}">${o.name}</div>`)
+        .join('');
+
+      this.list.querySelectorAll('.addr-option').forEach(el => {
+        el.addEventListener('click', () => {
+          const code = el.dataset.code;
+          const name = el.dataset.name;
+          this.displayText.textContent = name;
+          this.display.classList.remove('placeholder');
+          this.hidden.value = name;
+          this._close();
+          if (this.onChange) this.onChange(code, name);
+        });
+      });
+    }
+  }
+
+  // ── Init selects ──
+  const ward     = new AddrSelect('wardWrap');
+  const district = new AddrSelect('districtWrap', (code) => {
+    ward.reset(true);
+    ward.list.innerHTML = '<div class="addr-loading">Đang tải...</div>';
+    ward.wrap.classList.remove('disabled');
+    fetch(`${API}/d/${code}?depth=2`)
+      .then(r => r.json())
+      .then(data => ward.populate(data.wards || []))
+      .catch(() => { ward.list.innerHTML = '<div class="addr-option no-result">Lỗi tải dữ liệu</div>'; });
+  });
+  const province = new AddrSelect('provinceWrap', (code) => {
+    district.reset(true);
+    ward.reset(true);
+    district.list.innerHTML = '<div class="addr-loading">Đang tải...</div>';
+    district.wrap.classList.remove('disabled');
+    fetch(`${API}/p/${code}?depth=2`)
+      .then(r => r.json())
+      .then(data => district.populate(data.districts || []))
+      .catch(() => { district.list.innerHTML = '<div class="addr-option no-result">Lỗi tải dữ liệu</div>'; });
+  });
+
+  // ── Load provinces ──
+  fetch(`${API}/p/`)
+    .then(r => r.json())
+    .then(data => province.populate(data))
+    .catch(() => {
+      province.list.innerHTML = '<div class="addr-option no-result">Lỗi tải dữ liệu</div>';
+    });
+
+  // ── Form validation ──
+  document.getElementById('checkoutForm').addEventListener('submit', function (e) {
+    const pVal = document.getElementById('provinceVal').value;
+    const dVal = document.getElementById('districtVal').value;
+    const wVal = document.getElementById('wardVal').value;
+    const sVal = document.getElementById('streetAddress').value.trim();
+
+    if (!pVal || !dVal || !wVal || !sVal) {
+      e.preventDefault();
+      const missing = [];
+      if (!pVal) missing.push('tỉnh/thành phố');
+      if (!dVal) missing.push('quận/huyện');
+      if (!wVal) missing.push('phường/xã');
+      if (!sVal) missing.push('số nhà/thôn xóm');
+      alert('Vui lòng điền đầy đủ: ' + missing.join(', '));
+    }
+  });
+})();
+</script>
 
 <%- include('../partials/footer') %>
 <%- include('../partials/scripts') %>
